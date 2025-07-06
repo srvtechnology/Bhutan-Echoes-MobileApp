@@ -5,6 +5,7 @@ export default function HomeStack() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" /> 
       <Stack.Screen name="liveEvents" /> 
+      <Stack.Screen name="eventDetails" /> 
     </Stack>
   );
 }

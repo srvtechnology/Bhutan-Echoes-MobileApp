@@ -4,8 +4,8 @@ import { StatusBar } from 'expo-status-bar';
 import { useFonts, Inter_400Regular, Inter_500Medium, Inter_700Bold } from '@expo-google-fonts/inter';
 import { View, ActivityIndicator, SafeAreaView } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-
-
+import Toast from 'react-native-toast-message';
+import { ToastRoot } from '@/components/ToastHelper';
 
 
 declare global {
@@ -40,9 +40,12 @@ export default function RootLayout() {
         <Stack.Screen name="splash" />
         <Stack.Screen name="auth" />
         <Stack.Screen name="signup" />
+        <Stack.Screen name="forgot" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="+not-found" />
       </Stack>
+      <Toast />
+      <ToastRoot />
       </SafeAreaProvider>
   );
 }

@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
 import React from "react";
-import { Bell } from "lucide-react-native";
+import { Bell, BellRing, LucideBell, ConciergeBell } from "lucide-react-native";
 
 const Header = ({title}: {title: string}) => {
   return (
@@ -8,7 +8,7 @@ const Header = ({title}: {title: string}) => {
       <Text style={styles.headerTitle}>{title}</Text>
       <View style={styles.headerRight}>
         <TouchableOpacity style={styles.notificationButton}>
-          <Image source={require('../../assets/icons/bell.png')} resizeMode="contain" style={{height: 30, width: 30}} />
+          <Bell size={24} color={'#48732C'}/>
           <View style={styles.notificationBadge}>
             <Text style={styles.notificationBadgeText}>3</Text>
           </View>
@@ -37,6 +37,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
+    maxWidth: '70%',
   },
   headerRight: {
     position: "relative",
@@ -46,8 +47,8 @@ const styles = StyleSheet.create({
   },
   notificationBadge: {
     position: "absolute",
-    top: -8,
-    right: -10,
+    top: -10,
+    right: -15,
     backgroundColor: "#BF0A0A",
     borderRadius: 10,
     width: 20,

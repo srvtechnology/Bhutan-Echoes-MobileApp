@@ -16,24 +16,37 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import AddPost from "@/components/modals/addPost";
 import { router } from "expo-router";
 import axios from "axios";
-import Toast from "react-native-simple-toast";
+import Toast from "react-native-toast-message";
 import { baseUrl } from "@/config";
 import { Video } from "expo-av";
+import { showToast } from "@/components/ToastHelper";
 
 export default function HomeScreen() {
   const [showPostModal, setShowPostModal] = useState(false);
   const [postText, setPostText] = useState("");
   const [posts, setPosts] = useState([]);
+  const [events, setEvents] = useState([]);
 
   const fetchPosts = async () => {
     try {
       const { data } = await axios(baseUrl + "/timeline-entries");
-      console.log("Posts:", data);
+      // console.log("Posts:", data);
 
       setPosts(data.timeline_entries);
     } catch (error) {
       console.log("Fetch posts error:", error);
-      Toast.show("Error fetching posts. Please try again.", Toast.LONG);
+      showToast("error", "Error fetching posts", "Please try again.");
+    }
+  };
+  const fetchEvents = async () => {
+    try {
+      const { data } = await axios(baseUrl + "/events");
+      console.log("Events:", data);
+
+      setEvents(data.events);
+    } catch (error) {
+      console.log("Fetch events error:", error);
+      showToast("error", "Error fetching events", "Please try again.");
     }
   };
 
@@ -43,6 +56,7 @@ export default function HomeScreen() {
 
   useEffect(() => {
     fetchPosts();
+    fetchEvents();
   }, []);
 
   const renderPost = ({ item: post }: any) => (
@@ -101,107 +115,122 @@ export default function HomeScreen() {
     </View>
   );
 
+  const handleSeeMoreEvents = () => {
+    // router.push("/(tabs)/home/events");
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
-        {/* User Post */}
-        <FlatList
-          ListHeaderComponent={
-            <>
-              {/* Header */}
-              <Header title="Bhutan Echoes" />
+      {/* User Post */}
+      <FlatList
+        ListHeaderComponent={
+          <>
+            {/* Header */}
+            <Header title="Bhutan Echoes" />
 
-              {/* Featured Event Card */}
-              <View style={styles.featuredCard}>
-                <ImageBackground
-                  source={require("../../../assets/images/banner.png")}
-                  style={styles.featuredBackground}
-                >
-                  <View style={styles.featuredContent}>
-                    <Text style={styles.featuredTitle}>
-                      Drukyul's Literature and Arts Festival
-                    </Text>
-                    <Text style={styles.featuredTitle}>2025</Text>
-                    <Text style={styles.featuredTitle}>2nd - 4th August</Text>
-                    <TouchableOpacity style={styles.saveButton}>
-                      <Text style={styles.saveButtonText}>SAVE THE DATE</Text>
-                    </TouchableOpacity>
-                  </View>
-                </ImageBackground>
-              </View>
-
-              {/* Future Events */}
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Future Events</Text>
-                <View style={styles.eventsGrid}>
-                  <TouchableOpacity
-                    style={styles.eventItem}
-                    onPress={handleJoinLiveEvents}
-                  >
-                    <View
-                      style={[
-                        styles.eventIcon,
-                        { backgroundColor: "#EEE8E8", borderColor: "#CA3115" },
-                      ]}
-                    >
-                      <View style={styles.greenBorder}>
-                        <Image
-                          style={styles.eventEmoji}
-                          source={require("../../../assets/icons/camera.png")}
-                          resizeMode="contain"
-                        />
-                      </View>
-                    </View>
-                    <Text style={styles.eventLabel}>Join Live Events</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity style={styles.eventItem}>
-                    <View
-                      style={[styles.eventIcon, { backgroundColor: "#EEE8E8" }]}
-                    >
-                      <Image
-                        style={styles.eventEmoji}
-                        source={require("../../../assets/icons/rocket.png")}
-                        resizeMode="contain"
-                      />
-                    </View>
-                    <Text style={styles.eventLabel}>Science Exhibition</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity style={styles.eventItem}>
-                    <View
-                      style={[styles.eventIcon, { backgroundColor: "#EEE8E8" }]}
-                    >
-                      <Image
-                        style={styles.eventEmoji}
-                        source={require("../../../assets/icons/ted.png")}
-                        resizeMode="contain"
-                      />
-                    </View>
-                    <Text style={styles.eventLabel}>Ted Talk</Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity style={styles.eventItem}>
-                    <View
-                      style={[styles.eventIcon, { backgroundColor: "#EEE8E8" }]}
-                    >
-                      <Image
-                        style={styles.eventEmoji}
-                        source={require("../../../assets/icons/blood.png")}
-                        resizeMode="contain"
-                      />
-                    </View>
-                    <Text style={styles.eventLabel}>Blood Donation</Text>
+            {/* Featured Event Card */}
+            <View style={styles.featuredCard}>
+              <ImageBackground
+                source={require("../../../assets/images/banner.png")}
+                style={styles.featuredBackground}
+              >
+                <View style={styles.featuredContent}>
+                  <Text style={styles.featuredTitle}>
+                    Drukyul's Literature and Arts Festival
+                  </Text>
+                  <Text style={styles.featuredTitle}>2025</Text>
+                  <Text style={styles.featuredTitle}>2nd - 4th August</Text>
+                  <TouchableOpacity style={styles.saveButton}>
+                    <Text style={styles.saveButtonText}>SAVE THE DATE</Text>
                   </TouchableOpacity>
                 </View>
+              </ImageBackground>
+            </View>
+
+            {/* Future Events */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Future Events</Text>
+              <View style={styles.eventsGrid}>
+                <TouchableOpacity
+                  style={styles.eventItem}
+                  onPress={handleJoinLiveEvents}
+                >
+                  <View
+                    style={[
+                      styles.eventIcon,
+                      { backgroundColor: "#EEE8E8", borderColor: "#CA3115" },
+                    ]}
+                  >
+                    <View style={styles.greenBorder}>
+                      <Image
+                        style={styles.eventEmoji}
+                        source={require("../../../assets/icons/camera.png")}
+                        resizeMode="contain"
+                      />
+                    </View>
+                  </View>
+                  <Text style={styles.eventLabel}>Join Live Events</Text>
+                </TouchableOpacity>
+                {/* Events */}
+                {events.length === 0 ? (
+                        <View
+                          style={[
+                            styles.eventIcon,
+                            { backgroundColor: "#EEE8E8" },
+                          ]}
+                        >
+                        <Text style={styles.eventLabel}>No upcoming events </Text>
+                        </View>
+                ) : (
+                  <FlatList
+                  data={
+                    events.length > 3
+                      ? [
+                          ...events.slice(0, 3),
+                          { id: "see-more", isSeeMore: true },
+                        ]
+                      : events
+                  }
+                  keyExtractor={(item) => item.id?.toString() ?? "see-more"}
+                  renderItem={({ item }) =>
+                    item.isSeeMore ? (
+                      <TouchableOpacity
+                        style={[styles.eventItem, { justifyContent: "center" }]}
+                        onPress={handleSeeMoreEvents}
+                      >
+                        <Text style={styles.eventSeeMore}>See More</Text>
+                      </TouchableOpacity>
+                    ) : (
+                      <TouchableOpacity style={styles.eventItem}>
+                        <View
+                          style={[
+                            styles.eventIcon,
+                            { backgroundColor: "#EEE8E8" },
+                          ]}
+                        >
+                          <Image
+                            style={styles.eventEmoji}
+                            source={{ uri: item.icon }}
+                            resizeMode="contain"
+                          />
+                        </View>
+                        <Text style={styles.eventLabel}>{item.title}</Text>
+                      </TouchableOpacity>
+                    )
+                  }
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                />)}
               </View>
-            </>
-          }
-          data={posts}
-          keyExtractor={(item) => item.id}
-          renderItem={renderPost}
-          contentContainerStyle={{ paddingBottom: 100 }}
-          showsVerticalScrollIndicator={false}
-        />
+            </View>
+          </>
+        }
+        data={posts || []}
+        keyExtractor={(item) => item.id}
+        renderItem={renderPost}
+        contentContainerStyle={{ paddingBottom: 100 }}
+        showsVerticalScrollIndicator={false}
+      />
 
       {/* Floating Action Button */}
       <TouchableOpacity
@@ -269,11 +298,20 @@ const styles = StyleSheet.create({
   },
   eventsGrid: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    // justifyContent: "space-between",
   },
   eventItem: {
     alignItems: "center",
-    flex: 1,
+    marginHorizontal: 10,
+  },
+  eventSeeMore: {
+    fontSize: 16,
+    color: "#48732C",
+    fontFamily: "interMedium",
+    textAlign: "center",
+    fontStyle: "italic",
+    textTransform: "capitalize",
+    textDecorationLine: "underline",
   },
   redBorder: {
     width: 70,

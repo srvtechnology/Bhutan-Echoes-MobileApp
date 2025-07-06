@@ -106,7 +106,8 @@ const AddPost: React.FC<Props> = ({
               {attachment.type === "image" ? (
                 <Image
                   source={{ uri: attachment.uri }}
-                  style={{ width: '100%', height: '100%' }}
+                  style={{ width: '100%', height: 160, marginVertical: 10 }}
+                  resizeMode="contain"
                 />
               ) : (
                 <Video

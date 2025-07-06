@@ -5,12 +5,6 @@ import {
   ImageBackground,
   Image,
   StyleSheet,
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  TouchableWithoutFeedback,
-  Keyboard,
-  ScrollView,
   ActivityIndicator,
 } from "react-native";
 import { useState } from "react";
@@ -18,9 +12,9 @@ import { useRouter } from "expo-router";
 import CustomText from "@/components/ui/CustomText";
 import axios from "axios";
 import { baseUrl } from "../config";
-import Toast from "react-native-simple-toast";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { showToast } from "@/components/ToastHelper";
 
 export default function AuthScreen() {
   const [email, setEmail] = useState("");
@@ -30,33 +24,27 @@ export default function AuthScreen() {
 
   const validateFields = () => {
     if (!email.trim() || !password.trim()) {
-      Toast.show(
-        "Validation Error, Email and password are required.",
-        Toast.LONG,
-        {
-          tapToDismissEnabled: true,
-        }
+      showToast(
+        "error",
+        "Validation Error",
+        "Email and password are required."
       );
       return false;
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      Toast.show(
-        "Validation Error, Please enter a valid email address.",
-        Toast.LONG,
-        {
-          tapToDismissEnabled: true,
-        }
+      showToast(
+        "error",
+        "Validation Error",
+        "Please enter a valid email address."
       );
       return false;
     }
-    if (password.length < 6) {
-      Toast.show(
-        "Validation Error, Password must be at least 6 characters long.",
-        Toast.LONG,
-        {
-          tapToDismissEnabled: true,
-        }
+    if (password.length < 8) {
+      showToast(
+        "error",
+        "Validation Error",
+        "Password must be at least 8 characters long."
       );
       return false;
     }
@@ -75,18 +63,16 @@ export default function AuthScreen() {
 
       // Handle success (store token, user data, etc.)
       console.log("Login success:", response.data);
-      await AsyncStorage.setItem('token', response.data.token);
+      await AsyncStorage.setItem("token", response.data.token);
 
       router.replace("/(tabs)/home");
     } catch (error) {
       console.log("Login error:", error);
-      Toast.show(
-        "Login Failed " + error.response?.data?.message ||
-          "Something went wrong. Please try again.",
-        Toast.LONG,
-        {
-          tapToDismissEnabled: true,
-        }
+      showToast(
+        "error",
+        "Login Failed ",
+        error.response?.data?.message ||
+          "Something went wrong. Please try again."
       );
     } finally {
       setLoading(false);
@@ -94,12 +80,11 @@ export default function AuthScreen() {
   };
 
   const handleCreateAccount = () => {
-   router.push('/signup')
+    router.push("/signup");
   };
 
   const handleForgotPassword = () => {
-    // Handle forgot password
-    console.log("Forgot password");
+    router.push("/forgot");
   };
 
   return (
@@ -166,14 +151,16 @@ export default function AuthScreen() {
                 style={styles.signInButton}
                 onPress={handleSignIn}
               >
-                 {!loading ? <CustomText
-                                  style={styles.signInButtonText}
-                                  variant="interMedium"
-                                >
-                                  Sign In
-                                </CustomText>
-                                
-                              : <ActivityIndicator color={'white'}  />}
+                {!loading ? (
+                  <CustomText
+                    style={styles.signInButtonText}
+                    variant="interMedium"
+                  >
+                    Sign In
+                  </CustomText>
+                ) : (
+                  <ActivityIndicator color={"white"} />
+                )}
               </TouchableOpacity>
 
               <TouchableOpacity onPress={handleForgotPassword}>

@@ -5,12 +5,6 @@ import {
   ImageBackground,
   Image,
   StyleSheet,
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  TouchableWithoutFeedback,
-  Keyboard,
-  ScrollView,
   ActivityIndicator,
 } from "react-native";
 import { useState } from "react";
@@ -18,59 +12,68 @@ import { useRouter } from "expo-router";
 import CustomText from "@/components/ui/CustomText";
 import axios from "axios";
 import { baseUrl } from "../config";
-// import Toast from "react-native-root-toast";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { showToast } from "@/components/ToastHelper";
 
-export default function AuthScreen() {
-  const [otp, setOtp] = useState("");
+export default function ForgotPasswordScreen() {
+  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const validateFields = () => {
-    if (!otp.trim()) {
-      // Toast.show("Validation Error, OTP field required.", {
-      //   duration: Toast.durations.LONG,
-      //   position: Toast.positions.BOTTOM,
-      //   shadow: true,
-      //   animation: true,
-      //   hideOnPress: true,
-      // });
+    if (!email.trim()) {
+      showToast(
+        "error",
+        "Validation Error",
+        "Email is required."
+      );
       return false;
     }
-
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      showToast(
+        "error",
+        "Validation Error",
+        "Please enter a valid email address."
+      );
+      return false;
+    }
     return true;
   };
 
-  const handleOtpVerification = async () => {
+  const handleForgotPassword = async () => {
     if (!validateFields()) return;
 
     setLoading(true);
     try {
-      const response = await axios.post(baseUrl + "/otp", {
-        otp,
+      const response = await axios.post(baseUrl + "/forgot-password", {
+        email,
       });
 
-      // Handle success (store token, user data, etc.)
-      console.log("OTP verification success:", response.data);
+      console.log("Forgot Password success:", response.data);
+      showToast(
+        "success",
+        "Email Sent",
+        "If this email is registered, you will receive a password reset link shortly."
+      );
 
       router.replace("/auth");
     } catch (error) {
-      console.log("OTP verification error:", error);
-      // Toast.show("OTP verification Failed " + error.response?.data?.message ||
-      //     "Something went wrong. Please try again.", {
-      //   duration: Toast.durations.LONG,
-      //   position: Toast.positions.BOTTOM,
-      //   shadow: true,
-      //   animation: true,
-      //   hideOnPress: true,
-      // });
+      console.log("Forgot Password error:", error);
+      showToast(
+        "error",
+        "Forgot Password Failed ",
+        error.response?.data?.message ||
+          "Something went wrong. Please try again."
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSignIn = () => {
-    router.replace("/auth");
+  const handleCreateAccount = () => {
+    router.push("/auth");
   };
 
   return (
@@ -97,23 +100,23 @@ export default function AuthScreen() {
             </View>
           </View>
 
-          {/* Verify OTP Form */}
+          {/* Sign In Form */}
           <View style={styles.formContainer}>
             <CustomText style={styles.title} variant="interMedium">
-              Verify OTP
+              Forgot Password
             </CustomText>
 
             <View style={styles.inputContainer}>
               <CustomText style={styles.label} variant="inter">
-                Enter OTP
+                Email ID
               </CustomText>
               <TextInput
                 style={styles.input}
-                placeholder="OTP"
+                placeholder="eg. example@gmail.com"
                 placeholderTextColor="rgba(0, 0, 0, 0.5)"
-                value={otp}
-                onChangeText={setOtp}
-                keyboardType="default"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
                 autoCapitalize="none"
               />
             </View>
@@ -121,14 +124,14 @@ export default function AuthScreen() {
             <View style={styles.btnContainer}>
               <TouchableOpacity
                 style={styles.signInButton}
-                onPress={handleOtpVerification}
+                onPress={handleForgotPassword}
               >
                 {!loading ? (
                   <CustomText
                     style={styles.signInButtonText}
                     variant="interMedium"
                   >
-                    Verify
+                    Submit
                   </CustomText>
                 ) : (
                   <ActivityIndicator color={"white"} />
@@ -142,7 +145,7 @@ export default function AuthScreen() {
             <CustomText style={styles.createAccountText} variant="inter">
               Already have an account?
             </CustomText>
-            <TouchableOpacity onPress={handleSignIn}>
+            <TouchableOpacity onPress={handleCreateAccount}>
               <CustomText style={styles.createAccountLink} variant="interBold">
                 Sign In
               </CustomText>

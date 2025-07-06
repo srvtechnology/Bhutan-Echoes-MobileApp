@@ -5,17 +5,17 @@ import {
   ImageBackground,
   Image,
   StyleSheet,
-  ActivityIndicator
+  ActivityIndicator,
 } from "react-native";
 import { useState } from "react";
 import { useRouter } from "expo-router";
 import CustomText from "@/components/ui/CustomText";
 import axios from "axios";
 import { baseUrl } from "../config";
-import Toast from "react-native-simple-toast";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { showToast } from "@/components/ToastHelper";
 
-export default function AuthScreen() {
+export default function SignUpScreen() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -25,57 +25,70 @@ export default function AuthScreen() {
 
   const validateFields = () => {
     if (!name.trim()) {
-      Toast.show(
-        "Validation Error, Name is required.",
-        Toast.LONG,
-        {
-          tapToDismissEnabled: true,
-        }
-      );
+      showToast("error", "Validation Error", "Name is required.");
       return false;
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      Toast.show(
-        "Validation Error, Please enter a valid email address.",
-        Toast.LONG,
-        {
-          tapToDismissEnabled: true,
-        }
+      showToast(
+        "error",
+        "Validation Error",
+        "Please enter a valid email address."
       );
       return false;
     }
     if (password.length < 8) {
-      Toast.show(
-        "Validation Error, Password must be at least 8 characters long.",
-        Toast.LONG,
-        {
-          tapToDismissEnabled: true,
-        }
+      showToast(
+        "error",
+        "Validation Error",
+        "Password must be at least 8 characters long."
       );
       return false;
     }
     if (confirmPassword.length < 8) {
-      Toast.show(
-        "Validation Error, Confirm Password must be at least 8 characters long.",
-        Toast.LONG,
-        {
-          tapToDismissEnabled: true,
-        }
+      showToast(
+        "error",
+        "Validation Error",
+        "Confirm Password must be at least 8 characters long."
       );
       return false;
     }
     if (confirmPassword !== password) {
-      Toast.show(
-        "Validation Error, Password and Confirm Password must be same.",
-        Toast.LONG,
-        {
-          tapToDismissEnabled: true,
-        }
+      showToast(
+        "error",
+        "Validation Error",
+        "Password and Confirm Password must be same."
       );
       return false;
     }
     return true;
+  };
+
+  const sendVerificationEmail = async (
+    name: string,
+    email: string,
+    id: any
+  ) => {
+    try {
+      const response = await axios.post(baseUrl + "/send-signup-mail", {
+        name,
+        email,
+        verification_link: `${baseUrl}/verify-email/${id}`,
+      });
+      console.log("Verification email sent:", response.data);
+      showToast(
+        "success",
+        "Verification email sent",
+        "Please check your email and verify your account."
+      );
+    } catch (error) {
+      console.error("Error sending verification email:", error);
+      showToast(
+        "error",
+        "Error sending verification email",
+        error.response?.data?.message || "Please try again."
+      );
+    }
   };
 
   const handleSignUp = async () => {
@@ -83,33 +96,34 @@ export default function AuthScreen() {
 
     setLoading(true);
     try {
-      console.log(baseUrl + "/register",{
+      console.log(baseUrl + "/register", {
         name,
         email,
-        password, 
-        password_confirmation: confirmPassword
+        password,
+        password_confirmation: confirmPassword,
       });
-      
+
       const response = await axios.post(baseUrl + "/register", {
         name,
         email,
-        password, 
-        password_confirmation: confirmPassword
+        password,
+        password_confirmation: confirmPassword,
       });
 
       // Handle success (store token, user data, etc.)
       console.log("Registration success:", response.data);
+      console.log(name, email, response.data.user.id);
+      
+      await sendVerificationEmail(name, email, response.data.user.id);
 
-      router.replace("/verifyOtp");
+      router.replace("/auth");
     } catch (error) {
       console.log("Registration error:", error);
-      Toast.show(
-        "Registration Failed " + error.response?.data?.message ||
-          "Something went wrong. Please try again.",
-        Toast.LONG,
-        {
-          tapToDismissEnabled: true,
-        }
+      showToast(
+        "error",
+        "Registration Failed",
+        error.response?.data?.message ||
+          "Something went wrong. Please try again."
       );
     } finally {
       setLoading(false);
@@ -117,7 +131,7 @@ export default function AuthScreen() {
   };
 
   const handleSignIn = () => {
-    router.replace('/auth')
+    router.replace("/auth");
   };
 
   const handleForgotPassword = () => {
@@ -218,14 +232,16 @@ export default function AuthScreen() {
                 style={styles.signInButton}
                 onPress={handleSignUp}
               >
-                {!loading ? <CustomText
-                  style={styles.signInButtonText}
-                  variant="interMedium"
-                >
-                  Register
-                </CustomText>
-                
-              : <ActivityIndicator color={'white'}  />}
+                {!loading ? (
+                  <CustomText
+                    style={styles.signInButtonText}
+                    variant="interMedium"
+                  >
+                    Register
+                  </CustomText>
+                ) : (
+                  <ActivityIndicator color={"white"} />
+                )}
               </TouchableOpacity>
             </View>
           </View>
@@ -326,8 +342,8 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     width: 140,
     height: 55,
-    alignItems:'center',
-    justifyContent: 'center'
+    alignItems: "center",
+    justifyContent: "center",
   },
   signInButtonText: {
     color: "white",
