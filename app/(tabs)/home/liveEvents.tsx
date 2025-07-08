@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   TextInput,
   Image,
+  ActivityIndicator
 } from "react-native";
 import { useState, useEffect } from "react";
 import Header from "@/components/header";
@@ -19,21 +20,25 @@ import moment from "moment";
 
 export default function LiveEvents() {
   const [events, setEvents] = useState([]);
-  const [searchText, setSearchText] = useState(""); // <-- Add this
+  const [searchText, setSearchText] = useState("");
+  const [loading, setLoading] = useState(false)
 
   const filteredEvents = events.filter((event: any) =>
     event.title?.toLowerCase().includes(searchText.toLowerCase())
   );
 
   const fetchPosts = async () => {
+    setLoading(true);
     try {
       const { data } = await axios.get(baseUrl + "/live-sessions");
       console.log("Events:", data);
 
       setEvents(data.live_sessions);
+      setLoading(false);
     } catch (error) {
       console.log("Fetch posts error:", error);
       showToast("error", "Error fetching posts", "Please try again.");
+      setLoading(false);
     }
   };
 
@@ -59,9 +64,16 @@ export default function LiveEvents() {
             onChangeText={setSearchText}
           />
         </View>
+        {
+          loading && (
+            <View style={{ alignItems: "center", paddingTop: 20 }}>
+              <ActivityIndicator size="large" color="#48732C" />
+            </View>
+          )
+        }
 
         {/* Featured Event Card */}
-        {filteredEvents.length === 0 ? (
+        {!loading && filteredEvents.length === 0 ? (
           <View style={{ alignItems: "center", paddingTop: 20 }}>
             <Text
               style={{ fontFamily: "interMedium", fontSize: 16, color: "#333" }}
@@ -126,7 +138,7 @@ const styles = StyleSheet.create({
   },
   featuredCard: {
     marginHorizontal: 20,
-    marginBottom: 10,
+    marginBottom: 20,
     borderRadius: 17,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },

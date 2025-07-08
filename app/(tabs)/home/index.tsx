@@ -20,17 +20,19 @@ import Toast from "react-native-toast-message";
 import { baseUrl } from "@/config";
 import { Video } from "expo-av";
 import { showToast } from "@/components/ToastHelper";
+import Carousel from "react-native-reanimated-carousel";
+import moment from "moment";
 
 export default function HomeScreen() {
   const [showPostModal, setShowPostModal] = useState(false);
-  const [postText, setPostText] = useState("");
   const [posts, setPosts] = useState([]);
   const [events, setEvents] = useState([]);
+  const [featuredEvents, setFeaturedEvents] = useState([])
 
   const fetchPosts = async () => {
     try {
       const { data } = await axios(baseUrl + "/timeline-entries");
-      // console.log("Posts:", data);
+      // console.log("Posts: ------ ", data);
 
       setPosts(data.timeline_entries);
     } catch (error) {
@@ -38,10 +40,13 @@ export default function HomeScreen() {
       showToast("error", "Error fetching posts", "Please try again.");
     }
   };
+
   const fetchEvents = async () => {
     try {
       const { data } = await axios(baseUrl + "/events");
-      console.log("Events:", data);
+      // console.log("Events:-----", data);
+      const featured = data.events.filter((event: any) => event.is_featured === '1');
+      setFeaturedEvents(featured);
 
       setEvents(data.events);
     } catch (error) {
@@ -58,6 +63,17 @@ export default function HomeScreen() {
     fetchPosts();
     fetchEvents();
   }, []);
+
+  const featuredEventsa = [
+    {
+      id: 1,
+      image: require("../../../assets/images/banner.png"),
+      title: "Drukyul's Literature and Arts Festival",
+      year: "2025",
+      date: "2nd - 4th August",
+    },
+    // Add more featured events here if needed
+  ];
 
   const renderPost = ({ item: post }: any) => (
     <View style={styles.userPost}>
@@ -130,21 +146,32 @@ export default function HomeScreen() {
 
             {/* Featured Event Card */}
             <View style={styles.featuredCard}>
-              <ImageBackground
-                source={require("../../../assets/images/banner.png")}
-                style={styles.featuredBackground}
-              >
-                <View style={styles.featuredContent}>
-                  <Text style={styles.featuredTitle}>
-                    Drukyul's Literature and Arts Festival
-                  </Text>
-                  <Text style={styles.featuredTitle}>2025</Text>
-                  <Text style={styles.featuredTitle}>2nd - 4th August</Text>
-                  <TouchableOpacity style={styles.saveButton}>
-                    <Text style={styles.saveButtonText}>SAVE THE DATE</Text>
-                  </TouchableOpacity>
-                </View>
-              </ImageBackground>
+              <Carousel
+                width={410}
+                height={200}
+                data={featuredEvents}
+                renderItem={({ item }:any) => (
+                  <ImageBackground
+                    source={{uri: item.banner_images[0]}}
+                    style={styles.featuredBackground}
+                  >
+                    <View style={styles.featuredContent}>
+                      <Text style={styles.featuredTitle}>
+                        {item.title}
+                      </Text>
+                      <Text style={styles.featuredTitle}>{moment(item.end_date).format('YYYY')}</Text>
+                      <Text style={styles.featuredTitle}>{moment(item.start_date).format('D MMMM')} - {moment(item.end_date).format('D MMMM')}</Text>
+                      {/* <TouchableOpacity style={styles.saveButton}> */}
+                        <Text style={styles.saveButtonText}>SAVE THE DATE</Text>
+                      {/* </TouchableOpacity> */}
+                    </View>
+                  </ImageBackground>
+                )}
+                loop
+                autoPlay
+                autoPlayInterval={4000}
+                style={{ borderRadius: 17, width: '100%' }}
+              />
             </View>
 
             {/* Future Events */}
@@ -173,54 +200,55 @@ export default function HomeScreen() {
                 </TouchableOpacity>
                 {/* Events */}
                 {events.length === 0 ? (
-                        <View
-                          style={[
-                            styles.eventIcon,
-                            { backgroundColor: "#EEE8E8" },
-                          ]}
-                        >
-                        <Text style={styles.eventLabel}>No upcoming events </Text>
-                        </View>
+                  <View
+                    style={[styles.eventIcon, { backgroundColor: "#EEE8E8" }]}
+                  >
+                    <Text style={styles.eventLabel}>No upcoming events </Text>
+                  </View>
                 ) : (
                   <FlatList
-                  data={
-                    events.length > 3
-                      ? [
-                          ...events.slice(0, 3),
-                          { id: "see-more", isSeeMore: true },
-                        ]
-                      : events
-                  }
-                  keyExtractor={(item) => item.id?.toString() ?? "see-more"}
-                  renderItem={({ item }) =>
-                    item.isSeeMore ? (
-                      <TouchableOpacity
-                        style={[styles.eventItem, { justifyContent: "center" }]}
-                        onPress={handleSeeMoreEvents}
-                      >
-                        <Text style={styles.eventSeeMore}>See More</Text>
-                      </TouchableOpacity>
-                    ) : (
-                      <TouchableOpacity style={styles.eventItem}>
-                        <View
+                    data={
+                      events.length > 3
+                        ? [
+                            ...events.slice(0, 3),
+                            { id: "see-more", isSeeMore: true },
+                          ]
+                        : events
+                    }
+                    keyExtractor={(item) => item.id?.toString() ?? "see-more"}
+                    renderItem={({ item }) =>
+                      item.isSeeMore ? (
+                        <TouchableOpacity
                           style={[
-                            styles.eventIcon,
-                            { backgroundColor: "#EEE8E8" },
+                            styles.eventItem,
+                            { justifyContent: "center" },
                           ]}
+                          onPress={handleSeeMoreEvents}
                         >
-                          <Image
-                            style={styles.eventEmoji}
-                            source={{ uri: item.icon }}
-                            resizeMode="contain"
-                          />
-                        </View>
-                        <Text style={styles.eventLabel}>{item.title}</Text>
-                      </TouchableOpacity>
-                    )
-                  }
-                  horizontal
-                  showsHorizontalScrollIndicator={false}
-                />)}
+                          <Text style={styles.eventSeeMore}>See More</Text>
+                        </TouchableOpacity>
+                      ) : (
+                        <TouchableOpacity style={styles.eventItem}>
+                          <View
+                            style={[
+                              styles.eventIcon,
+                              { backgroundColor: "#EEE8E8" },
+                            ]}
+                          >
+                            <Image
+                              style={styles.eventEmoji}
+                              source={{ uri: item.icon }}
+                              resizeMode="contain"
+                            />
+                          </View>
+                          <Text style={styles.eventLabel}>{item.title}</Text>
+                        </TouchableOpacity>
+                      )
+                    }
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                  />
+                )}
               </View>
             </View>
           </>
@@ -267,11 +295,21 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
   },
-  featuredBackground: {},
+  featuredBackground: {
+    borderRadius: 17,
+    height: '100%',
+    alignItems: "center",
+    justifyContent: "center",
+    width: "100%",
+    
+  },
   featuredContent: {
     padding: 25,
     alignItems: "center",
     backgroundColor: "rgba(0,0,0,0.3)",
+     height: '100%',
+    justifyContent: "center",
+    width: "100%",
   },
   featuredTitle: {
     fontSize: 17,
