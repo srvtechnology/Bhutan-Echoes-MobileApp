@@ -7,48 +7,89 @@ import {
   TextInput,
   Image,
 } from "react-native";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Header from "@/components/header";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Search } from "lucide-react-native";
+import axios from "axios";
+import { baseUrl } from "@/config";
+import { showToast } from "@/components/ToastHelper";
+import moment from "moment";
 
 export default function LiveEvents() {
-  const [showPostModal, setShowPostModal] = useState(false);
+  const [events, setEvents] = useState([]);
+  const [searchText, setSearchText] = useState(""); // <-- Add this
 
-  const handleJoinLiveEvents = () => {
-    router.push("/(tabs)/home/liveEvents");
+  const filteredEvents = events.filter((event: any) =>
+    event.title?.toLowerCase().includes(searchText.toLowerCase())
+  );
+
+  const fetchPosts = async () => {
+    try {
+      const { data } = await axios.get(baseUrl + "/live-sessions");
+      console.log("Events:", data);
+
+      setEvents(data.live_sessions);
+    } catch (error) {
+      console.log("Fetch posts error:", error);
+      showToast("error", "Error fetching posts", "Please try again.");
+    }
   };
+
+  useEffect(() => {
+    fetchPosts();
+  }, []);
 
   return (
     <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+      {/* Header */}
+      <Header title="Live Events" />
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
-        <Header title="Live Events" />
         {/* Search */}
         <View style={styles.search}>
           <Search size={26} color={"#888"} style={styles.searchIcon} />
-          <TextInput placeholder="Search Events" style={styles.searchInput} />
+          <TextInput
+            placeholder="Search Events"
+            style={styles.searchInput}
+            value={searchText}
+            onChangeText={setSearchText}
+          />
         </View>
 
         {/* Featured Event Card */}
-        <TouchableOpacity onPress={() => router.push("/(tabs)/home/eventDetails")}>
-          <View style={styles.featuredCard}>
-            <Image
-              source={require("../../../assets/images/banner.png")}
-              style={styles.featuredImage}
-            />
-            <View style={styles.eventDetails}>
-              <Text style={styles.featuredTitle}>
-                Event: Drukyul's Literature and Arts Festival
-              </Text>
-              <Text style={styles.featuredTitle}>Date: 2nd - 4th August</Text>
-            </View>
+        {filteredEvents.length === 0 ? (
+          <View style={{ alignItems: "center", paddingTop: 20 }}>
+            <Text
+              style={{ fontFamily: "interMedium", fontSize: 16, color: "#333" }}
+            >
+              No data found
+            </Text>
           </View>
-        </TouchableOpacity>
+        ) : (
+          filteredEvents.map((event: any, index) => (
+            <TouchableOpacity
+            key={index + event.id}
+              style={styles.featuredCard}
+              onPress={() => router.push("/(tabs)/home/eventDetails")}
+            >
+              <Image
+                source={{ uri: event.thumbnail }}
+                style={styles.featuredImage}
+              />
+              <View style={styles.eventDetails}>
+                <Text style={styles.featuredTitle}>Event: {event.title}</Text>
+                <Text style={styles.featuredTitle}>
+                  Date: {moment(event.start_time).format("D MMM, YY")} -{" "}
+                  {moment(event.end_time).format("D MMM, YY")}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          ))
+        )}
 
         <View style={{ height: 100 }} />
       </ScrollView>
@@ -87,12 +128,11 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginBottom: 10,
     borderRadius: 17,
-    overflow: "hidden",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
-    elevation: 8,
+    elevation: 12,
     backgroundColor: "#F9F9F9",
   },
   featuredImage: {
