@@ -2,7 +2,7 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
+  Dimensions,
   TouchableOpacity,
   FlatList,
   ImageBackground,
@@ -23,11 +23,13 @@ import { showToast } from "@/components/ToastHelper";
 import Carousel from "react-native-reanimated-carousel";
 import moment from "moment";
 
+const screnWidth = Dimensions.get("screen").width;
+
 export default function HomeScreen() {
   const [showPostModal, setShowPostModal] = useState(false);
   const [posts, setPosts] = useState([]);
   const [events, setEvents] = useState([]);
-  const [featuredEvents, setFeaturedEvents] = useState([])
+  const [featuredEvents, setFeaturedEvents] = useState([]);
 
   const fetchPosts = async () => {
     try {
@@ -45,7 +47,11 @@ export default function HomeScreen() {
     try {
       const { data } = await axios(baseUrl + "/events");
       // console.log("Events:-----", data);
-      const featured = data.events.filter((event: any) => event.is_featured === '1');
+      const featured = data.events.filter(
+        (event: any) => event.is_featured === "1"
+      );
+      console.log("=== featured", featured);
+
       setFeaturedEvents(featured);
 
       setEvents(data.events);
@@ -147,30 +153,31 @@ export default function HomeScreen() {
             {/* Featured Event Card */}
             <View style={styles.featuredCard}>
               <Carousel
-                width={410}
+                width={screnWidth / 1.1}
                 height={200}
                 data={featuredEvents}
-                renderItem={({ item }:any) => (
+                renderItem={({ item }: any) => (
                   <ImageBackground
-                    source={{uri: item.banner_images[0]}}
+                    source={{ uri: item.banner_images[0] }}
                     style={styles.featuredBackground}
                   >
                     <View style={styles.featuredContent}>
+                      <Text style={styles.featuredTitle}>{item.title}</Text>
                       <Text style={styles.featuredTitle}>
-                        {item.title}
+                        {moment(item.end_date).format("YYYY")}
                       </Text>
-                      <Text style={styles.featuredTitle}>{moment(item.end_date).format('YYYY')}</Text>
-                      <Text style={styles.featuredTitle}>{moment(item.start_date).format('D MMMM')} - {moment(item.end_date).format('D MMMM')}</Text>
-                      {/* <TouchableOpacity style={styles.saveButton}> */}
-                        <Text style={styles.saveButtonText}>SAVE THE DATE</Text>
-                      {/* </TouchableOpacity> */}
+                      <Text style={styles.featuredTitle}>
+                        {moment(item.start_date).format("D MMMM")} -{" "}
+                        {moment(item.end_date).format("D MMMM")}
+                      </Text>
+                      <Text style={styles.saveButtonText}>SAVE THE DATE</Text>
                     </View>
                   </ImageBackground>
                 )}
                 loop
                 autoPlay
                 autoPlayInterval={4000}
-                style={{ borderRadius: 17, width: '100%' }}
+                style={{ borderRadius: 17 }}
               />
             </View>
 
@@ -286,8 +293,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   featuredCard: {
-    margin: 20,
-    borderRadius: 17,
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  featuredBackground: {
+    flex: 1,
     overflow: "hidden",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
@@ -295,30 +305,18 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
   },
-  featuredBackground: {
-    borderRadius: 17,
-    height: '100%',
-    alignItems: "center",
-    justifyContent: "center",
-    width: "100%",
-    
-  },
   featuredContent: {
-    padding: 25,
-    alignItems: "center",
+    flex: 1,
     backgroundColor: "rgba(0,0,0,0.3)",
-     height: '100%',
     justifyContent: "center",
-    width: "100%",
+    alignItems: "center",
   },
   featuredTitle: {
     fontSize: 17,
     fontFamily: "interMedium",
     color: "white",
-    textAlign: "center",
     marginBottom: 8,
   },
-  saveButton: {},
   saveButtonText: {
     color: "white",
     fontSize: 8,

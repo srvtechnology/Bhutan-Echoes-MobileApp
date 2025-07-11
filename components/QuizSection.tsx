@@ -7,6 +7,7 @@ import {
   Alert,
   FlatList,
 } from "react-native";
+import QuizResult from "./modals/quizResult";
 
 interface QuizQuestion {
   id: string;
@@ -17,7 +18,7 @@ interface QuizQuestion {
 
 interface QuizSectionProps {
   questions: QuizQuestion[];
-  onQuizComplete?: (score: number) => void;
+  onQuizComplete?: (score: any) => void;
 }
 
 export default function QuizSection({
@@ -28,122 +29,91 @@ export default function QuizSection({
   const [selectedAnswers, setSelectedAnswers] = useState<{
     [key: string]: number;
   }>({});
-  const [showResults, setShowResults] = useState(false);
-
   const currentQuestion = questions[currentQuestionIndex];
 
-  const handleAnswerSelect = (questionId: any, optionIndex: number) => {    
+  const handleAnswerSelect = (optionIndex: number) => {
     setSelectedAnswers((prev) => ({
       ...prev,
-      [questionId]: optionIndex,
+      [currentQuestion.id]: optionIndex,
     }));
   };
 
   const handleSubmit = () => {
-    // if (selectedAnswers[currentQuestion.id] === undefined) {
-    //   Alert.alert(
-    //     "Please select an answer",
-    //     "You must select an answer before submitting."
-    //   );
-    //   return;
-    // }
+    if (selectedAnswers[currentQuestion.id] === undefined) {
+      Alert.alert(
+        "Please select an answer",
+        "You must select an answer before submitting."
+      );
+      return;
+    }
 
-    // if (currentQuestionIndex < questions.length - 1) {
-    //   setCurrentQuestionIndex((prev) => prev + 1);
-    // } else {
-    //   // Calculate score
-    //   const score = questions.reduce((acc, question) => {
-    //     const userAnswer = selectedAnswers[question.id];
-    //     return acc + (userAnswer === question.correctAnswer ? 1 : 0);
-    //   }, 0);
+    if (currentQuestionIndex < questions.length - 1) {
+      setCurrentQuestionIndex((prev) => prev + 1);
+    } else {
+      // Calculate score
+      const score = questions.reduce((acc, question) => {
+        const userAnswer = selectedAnswers[question.id];
+        return acc + (userAnswer === question.correctAnswer ? 1 : 0);
+      }, 0);
 
-    //   setShowResults(true);
-    //   onQuizComplete?.(score);
-    // }
+      onQuizComplete?.({
+        score,
+        correct: score,
+        wrong: questions.length - score,
+      });
+    }
   };
-
-  const resetQuiz = () => {
-    setCurrentQuestionIndex(0);
-    setSelectedAnswers({});
-    setShowResults(false);
-  };
-
-  if (showResults) {
-    const score = questions.reduce((acc, question) => {
-      const userAnswer = selectedAnswers[question.id];
-      return acc + (userAnswer === question.correctAnswer ? 1 : 0);
-    }, 0);
-
-    return (
-      <View style={styles.container}>
-        <Text style={styles.resultsTitle}>Quiz Complete!</Text>
-        <Text style={styles.scoreText}>
-          Your Score: {score}/{questions.length}
-        </Text>
-        <TouchableOpacity style={styles.retakeButton} onPress={resetQuiz}>
-          <Text style={styles.retakeButtonText}>Retake Quiz</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
 
   return (
-    <View style={{ flex: 1 }}>
-      <FlatList
-        data={questions}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item, index }) => (
-          <View key={item.id} style={styles.container}>
-            <View style={styles.questionHeader}>
-              <Text style={styles.questionNumber}>
-                Quiz {index + 1}: {item.question}
-              </Text>
-            </View>
+    <View style={styles.container}>
+      <View style={styles.questionHeader}>
+        <Text style={styles.questionNumber}>
+          Quiz {currentQuestionIndex + 1}: {currentQuestion.question}
+        </Text>
+      </View>
 
-            <View style={styles.optionsContainer}>
-              {item.options.map((option, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={[
-                    styles.optionButton,
-                    selectedAnswers[item.id] === index && styles.selectedOption,
-                  ]}
-                  onPress={() => handleAnswerSelect(item.id, index)}
-                >
-                  <Text
-                    style={[
-                      styles.optionText,
-                      selectedAnswers[item.id] === index &&
-                        styles.selectedOptionText,
-                    ]}
-                  >
-                    {option}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <TouchableOpacity
+      <View style={styles.optionsContainer}>
+        {currentQuestion.options.map((option, index) => (
+          <TouchableOpacity
+            key={index}
+            style={[
+              styles.optionButton,
+              selectedAnswers[currentQuestion.id] === index &&
+                styles.selectedOption,
+            ]}
+            onPress={() => handleAnswerSelect(index)}
+          >
+            <Text
               style={[
-                styles.submitButton,
-                selectedAnswers[item.id] !== undefined &&
-                  styles.submitButtonActive,
+                styles.optionText,
+                selectedAnswers[currentQuestion.id] === index &&
+                  styles.selectedOptionText,
               ]}
-              onPress={handleSubmit}
             >
-              <Text
-                style={[
-                  styles.submitButtonText,
-                  selectedAnswers[item.id] !== undefined &&
-                    styles.submitButtonTextActive,
-                ]}
-              >
-                Submit
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
-      />
+              {option}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <TouchableOpacity
+        style={[
+          styles.submitButton,
+          selectedAnswers[currentQuestion.id] !== undefined &&
+            styles.submitButtonActive,
+        ]}
+        onPress={handleSubmit}
+      >
+        <Text
+          style={[
+            styles.submitButtonText,
+            selectedAnswers[currentQuestion.id] !== undefined &&
+              styles.submitButtonTextActive,
+          ]}
+        >
+          {currentQuestionIndex < questions.length - 1 ? "Next" : "Submit"}
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 }
