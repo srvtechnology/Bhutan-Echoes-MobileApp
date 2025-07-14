@@ -8,6 +8,10 @@ import {
   FlatList,
 } from "react-native";
 import QuizResult from "./modals/quizResult";
+import Toast from "react-native-toast-message";
+import { baseUrl } from "@/config";
+import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface QuizQuestion {
   id: string;
@@ -26,6 +30,7 @@ export default function QuizSection({
   onQuizComplete,
 }: QuizSectionProps) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [isBtnDisabled, setIsBtnDisabled] = useState(false);
   const [selectedAnswers, setSelectedAnswers] = useState<{
     [key: string]: number;
   }>({});
@@ -37,7 +42,52 @@ export default function QuizSection({
       [currentQuestion.id]: optionIndex,
     }));
   };
+  const submitAnswer = async (
+    liveQuizId: string | number,
+    questionId: string | number,
+    answerId: string | number
+  ) => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      console.log(
+        "quesion answer id",
+        token,
+        questionId,
+        answerId,
+        `${baseUrl}/live-quizzes/${liveQuizId}/questions/${questionId}/answer `
+      );
 
+      const { data } = await axios.post(
+        `${baseUrl}/live-quizzes/1/questions/${questionId}/answer `,
+        { selected_answer_id: answerId },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      console.log("submit answer call", data);
+
+      Toast.show({
+        type: "success",
+        text1: data.message,
+      });
+      onQuizComplete?.({
+        total: questions.length,
+        correct: data.user_right,
+        wrong: data.user_wrong,
+      });
+    } catch (error) {
+      console.log("submit answer error", error);
+
+      Toast.show({
+        type: "error",
+        text1: "Error submitting answer",
+        text2: "Please try again.",
+      });
+    }
+  };
   const handleSubmit = () => {
     if (selectedAnswers[currentQuestion.id] === undefined) {
       Alert.alert(
@@ -50,17 +100,21 @@ export default function QuizSection({
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex((prev) => prev + 1);
     } else {
+      // submitAnswer()
       // Calculate score
       const score = questions.reduce((acc, question) => {
         const userAnswer = selectedAnswers[question.id];
-        return acc + (userAnswer === question.correctAnswer ? 1 : 0);
+        return {
+          liveQuizId: question.live_quiz_id,
+          questionId: question.id,
+          answerId: question.answers[userAnswer].id,
+        };
+        // return acc + (question.answers[userAnswer].is_correct ? 1 : 0);
       }, 0);
+      console.log("score", score);
+      submitAnswer(score.liveQuizId, score.questionId, score.answerId);
 
-      onQuizComplete?.({
-        score,
-        correct: score,
-        wrong: questions.length - score,
-      });
+      // setIsBtnDisabled(true);
     }
   };
 
@@ -73,12 +127,14 @@ export default function QuizSection({
       </View>
 
       <View style={styles.optionsContainer}>
-        {currentQuestion.options.map((option, index) => (
+        {currentQuestion.answers.map((option, index) => (
           <TouchableOpacity
+            disabled={isBtnDisabled}
             key={index}
             style={[
               styles.optionButton,
               selectedAnswers[currentQuestion.id] === index &&
+                !isBtnDisabled &&
                 styles.selectedOption,
             ]}
             onPress={() => handleAnswerSelect(index)}
@@ -87,19 +143,22 @@ export default function QuizSection({
               style={[
                 styles.optionText,
                 selectedAnswers[currentQuestion.id] === index &&
+                  !isBtnDisabled &&
                   styles.selectedOptionText,
               ]}
             >
-              {option}
+              {option.answer}
             </Text>
           </TouchableOpacity>
         ))}
       </View>
 
       <TouchableOpacity
+        disabled={isBtnDisabled}
         style={[
           styles.submitButton,
           selectedAnswers[currentQuestion.id] !== undefined &&
+            !isBtnDisabled &&
             styles.submitButtonActive,
         ]}
         onPress={handleSubmit}

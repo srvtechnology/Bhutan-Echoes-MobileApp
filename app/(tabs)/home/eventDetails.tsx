@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -18,12 +18,16 @@ import PollSection from "@/components/PollSection";
 import Header from "@/components/header";
 import { Video } from "expo-av";
 import QuizResult from "@/components/modals/quizResult";
+import { baseUrl } from "@/config";
+import axios from "axios";
 
 export default function EventDetailsScreen() {
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [quizScore, setQuizScore] = useState<any>({});
   const [showQuizResultModal, setShowQuizResultModal] = useState(false);
   const [eventRating, setEventRating] = useState(4.2);
+  const [isQuizLoading, setIsQuizLoading] = useState(true);
+  const [quizes, setQuizes] = useState([]);
   const [comments, setComments] = useState<Comment[]>([
     {
       id: "1",
@@ -67,6 +71,19 @@ export default function EventDetailsScreen() {
     ],
   };
 
+  const fetchQuizes = async () => {
+    setIsQuizLoading(true);
+    try {
+      const { data } = await axios.get(baseUrl + "/live-quizzes");
+      console.log("Quizes", data.live_quizzes[0]);
+      setQuizes(data.live_quizzes[0]);
+      setIsQuizLoading(false);
+    } catch (error) {
+      console.log("Error fetching quizes:", error);
+      // setIsQuizLoading(false);
+    }
+  };
+
   const handleRatingSubmit = (rating: number, comment: string) => {
     const newComment: Comment = {
       id: Date.now().toString(),
@@ -92,6 +109,10 @@ export default function EventDetailsScreen() {
     console.log("Poll vote:", pollId, optionId);
   };
 
+  useEffect(() => {
+    fetchQuizes();
+  }, []);
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
@@ -115,15 +136,18 @@ export default function EventDetailsScreen() {
             useNativeControls
             resizeMode="contain"
             shouldPlay={false}
+            isMuted={false}
             // poster="https://images.pexels.com/photos/1181673/pexels-photo-1181673.jpeg"
           />
         </View>
 
         {/* Quiz Section */}
-        <QuizSection
-          questions={quizQuestions}
-          onQuizComplete={handleQuizComplete}
-        />
+        {!isQuizLoading && (
+          <QuizSection
+            questions={quizes.questions}
+            onQuizComplete={handleQuizComplete}
+          />
+        )}
 
         {/* Poll Section */}
         <PollSection poll={pollData} onVote={handlePollVote} />

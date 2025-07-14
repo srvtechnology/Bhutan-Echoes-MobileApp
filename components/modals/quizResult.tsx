@@ -51,15 +51,15 @@ const QuizResult: React.FC<Props> = ({
             />
             <Text style={styles.ressultTitle}>Cogratulations</Text>
             <Text style={styles.ressultSubTitle}>
-              {score.score === 0
+              {score.correct === 0
                 ? "Oops!!"
                 : "You did a great job in the quiz!"}
             </Text>
             <View style={styles.border} />
             <View style={styles.scoreContainer}>
               <View style={styles.scoreSubContainer}>
-                <Text style={styles.scoreTitle}>Marks Obtained</Text>
-                <Text style={styles.score}>{score.score}</Text>
+                <Text style={styles.scoreTitle}>Total Questions</Text>
+                <Text style={styles.score}>{score.total}</Text>
               </View>
               <View style={styles.scoreSubContainer}>
                 <Text style={styles.scoreTitle}>Right Answers</Text>
