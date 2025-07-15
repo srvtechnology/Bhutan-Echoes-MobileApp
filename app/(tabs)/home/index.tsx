@@ -46,7 +46,7 @@ export default function HomeScreen() {
   const fetchEvents = async () => {
     try {
       const { data } = await axios(baseUrl + "/events");
-      // console.log("Events:-----", data);
+      console.log("Events:-----", data);
       const featured = data.events.filter(
         (event: any) => event.is_featured === "1"
       );
@@ -235,7 +235,15 @@ export default function HomeScreen() {
                           <Text style={styles.eventSeeMore}>See More</Text>
                         </TouchableOpacity>
                       ) : (
-                        <TouchableOpacity style={styles.eventItem}>
+                        <TouchableOpacity
+                          style={styles.eventItem}
+                          onPress={() =>
+                            router.push({
+                              pathname: `/(tabs)/home/otherEventDetails`,
+                              params: { id: item.id },
+                            })
+                          }
+                        >
                           <View
                             style={[
                               styles.eventIcon,
