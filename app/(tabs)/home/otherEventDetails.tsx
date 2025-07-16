@@ -4,13 +4,13 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  SafeAreaView,
   TouchableOpacity,
   Image,
   Dimensions,
 } from "react-native";
 import { Bell, Calendar, MapPin, Users, Clock } from "lucide-react-native";
 import Header from "@/components/header";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const { width: screenWidth } = Dimensions.get("window");
 
@@ -48,7 +48,7 @@ The primary objective of the camp was to encourage voluntary blood donation, rai
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       {/* Header */}
       <Header
         title="Blood Donation Camp Organized by

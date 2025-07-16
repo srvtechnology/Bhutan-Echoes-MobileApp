@@ -148,7 +148,7 @@ export default function HomeScreen() {
         ListHeaderComponent={
           <>
             {/* Header */}
-            <Header title="Bhutan Echoes" />
+            <Header title="Bhutan Echoes" back={false} />
 
             {/* Featured Event Card */}
             <View style={styles.featuredCard}>

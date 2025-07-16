@@ -4,12 +4,12 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  SafeAreaView,
   TouchableOpacity,
   TextInput,
   Modal,
   Alert,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import {
   Search,
   Filter,
@@ -140,7 +140,7 @@ export default function ResourcesScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
       {/* Header */}
       <View style={{ position: "relative" }}>
         <Header title="Resources for free" back={false} />
@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#D9D9D9",
     borderRadius: 15,
     paddingHorizontal: 15,
-    paddingVertical: 18,
+    height: 50,
   },
   searchInput: {
     flex: 1,
