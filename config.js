@@ -1,3 +1,1 @@
-import { BASE_URL } from '@env';
-
-export const baseUrl = BASE_URL;
+export const baseUrl = process.env.EXPO_PUBLIC_BASE_URL;
