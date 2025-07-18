@@ -9,7 +9,7 @@ import {
   Image,
 } from "react-native";
 import { useState, useEffect } from "react";
-import { Bell, Plus, X, Paperclip } from "lucide-react-native";
+import { Bell, Plus, X, Flag } from "lucide-react-native";
 import CustomText from "@/components/ui/CustomText";
 import Header from "@/components/header";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -22,6 +22,8 @@ import { Video } from "expo-av";
 import { showToast } from "@/components/ToastHelper";
 import Carousel from "react-native-reanimated-carousel";
 import moment from "moment";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import FlagModal from "@/components/modals/flagModal";
 
 const screnWidth = Dimensions.get("screen").width;
 
@@ -30,16 +32,29 @@ export default function HomeScreen() {
   const [posts, setPosts] = useState([]);
   const [events, setEvents] = useState([]);
   const [featuredEvents, setFeaturedEvents] = useState([]);
+  const [userDetails, setUserDetails] = useState({});
+  const [showFlagModal, setShowFlagModal] = useState(false);
 
   const fetchPosts = async () => {
     try {
       const { data } = await axios(baseUrl + "/timeline-entries");
-      // console.log("Posts: ------ ", data);
+      console.log("Posts: ------ ", data);
 
       setPosts(data.timeline_entries);
     } catch (error) {
       console.log("Fetch posts error:", error);
       showToast("error", "Error fetching posts", "Please try again.");
+    }
+  };
+  const fetchUserDetailsFromLocalStorage = async () => {
+    try {
+      const userDetails = await AsyncStorage.getItem("user");
+      if (userDetails) {
+        const parsedUserDetails = JSON.parse(userDetails);
+        setUserDetails(parsedUserDetails);
+      }
+    } catch (error) {
+      console.log("Error fetching user details:", error);
     }
   };
 
@@ -65,7 +80,19 @@ export default function HomeScreen() {
     router.push("/(tabs)/home/liveEvents");
   };
 
+  const handleFlagSubmit = (reason: string) => {
+    try {
+      const { data } = axios.post(baseUrl + "/flag", {
+        reason: reason,
+      });
+      console.log("Flag submitted:", data);
+    } catch (error) {
+      console.log("Error submitting flag:", error);
+    }
+  };
+
   useEffect(() => {
+    fetchUserDetailsFromLocalStorage();
     fetchPosts();
     fetchEvents();
   }, []);
@@ -83,15 +110,20 @@ export default function HomeScreen() {
 
   const renderPost = ({ item: post }: any) => (
     <View style={styles.userPost}>
-      <View style={styles.userInfo}>
-        <View style={styles.avatar}>
-          <Image
-            source={require("../../../assets/icons/camera.png")}
-            style={styles.avatarImage}
-            resizeMode="cover"
-          />
+      <View style={styles.postHeader}>
+        <View style={styles.userInfo}>
+          <View style={styles.avatar}>
+            <Image
+              source={require("../../../assets/icons/camera.png")}
+              style={styles.avatarImage}
+              resizeMode="cover"
+            />
+          </View>
+          <Text style={styles.username}>Tshering</Text>
         </View>
-        <Text style={styles.username}>Tshering</Text>
+        <TouchableOpacity onPress={() => setShowFlagModal(true)}>
+          <Flag size={20} color="#CA3115" />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.postBody}>
@@ -288,6 +320,12 @@ export default function HomeScreen() {
         setShowPostModal={setShowPostModal}
         showPostModal={showPostModal}
       />
+      {/* Flag Modal */}
+      <FlagModal
+        showPostModal={showFlagModal}
+        setShowPostModal={setShowFlagModal}
+        onFlagSubmit={handleFlagSubmit}
+      />
     </SafeAreaView>
   );
 }
@@ -399,10 +437,16 @@ const styles = StyleSheet.create({
   userPost: {
     marginBottom: 20,
   },
-  userInfo: {
+  postHeader: {
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 15,
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+  },
+  userInfo: {
+    flexDirection: "row",
+    alignItems: "center",
   },
   avatar: {
     width: 21,
@@ -412,7 +456,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginRight: 12,
     backgroundColor: "#e0e0e0",
-    marginLeft: 20,
   },
   avatarImage: {
     height: 21,

@@ -1,0 +1,195 @@
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Modal,
+  TextInput,
+  Image,
+} from "react-native";
+import React, { useState } from "react";
+import * as ImagePicker from "expo-image-picker";
+import { Paperclip, X } from "lucide-react-native";
+import { Video } from "expo-av";
+
+interface Props {
+  showPostModal: boolean;
+  setShowPostModal: (e: any) => void;
+  onFlagSubmit: (post: any) => void;
+}
+
+const FlagModal: React.FC<Props> = ({
+  showPostModal,
+  setShowPostModal,
+  onFlagSubmit,
+}) => {
+  const [flagText, setFlagText] = useState("");
+
+  return (
+    <Modal
+      visible={showPostModal}
+      animationType="fade"
+      presentationStyle="overFullScreen"
+      transparent
+    >
+      <View style={styles.modalContainer}>
+        <View style={styles.commentBox}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Report User</Text>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setShowPostModal(false)}
+            >
+              <X size={18} color="#fff" />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.usernameContainer}>
+            <Text style={styles.username}>
+              Are you sure? You want to report this user?
+            </Text>
+          </View>
+
+          <View style={{ paddingHorizontal: 20 }}>
+            <Text style={styles.inputHeading}>Provide Reason</Text>
+            <TextInput
+              style={styles.postInput}
+              placeholder="Write something! (Like Poems, Photos, Story...)"
+              value={flagText}
+              onChangeText={setFlagText}
+            />
+          </View>
+
+          <View style={styles.modalActions}>
+            <TouchableOpacity
+              style={[
+                styles.postButton,
+                flagText.length > 0 && styles.postButtonActive,
+              ]}
+              onPress={() => onFlagSubmit(flagText)}
+            >
+              <Text
+                style={[
+                  styles.postButtonText,
+                  flagText.length > 0 && styles.postButtonTextActive,
+                ]}
+              >
+                Okay
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+};
+
+const styles = StyleSheet.create({
+  // same styles as before
+  avatar: {
+    width: 41,
+    height: 41,
+    borderRadius: 22,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+    backgroundColor: "#e0e0e0",
+    marginLeft: 20,
+  },
+  avatarImage: { height: 41, width: 41, borderRadius: 22 },
+  usernameContainer: {
+    marginTop: 30,
+    alignItems: "center",
+    paddingHorizontal: 40,
+  },
+  username: {
+    fontSize: 17,
+    fontFamily: "interMedium",
+    color: "#000",
+    textAlign: "center",
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    justifyContent: "center",
+    padding: 15,
+  },
+  commentBox: {
+    backgroundColor: "#fff",
+    paddingBottom: 30,
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+    position: "relative",
+  },
+  modalTitle: {
+    fontSize: 17,
+    fontWeight: "600",
+    fontFamily: "interMedium",
+    color: "#000",
+  },
+  modalUserInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
+  },
+  closeButton: {
+    height: 36,
+    width: 36,
+    borderRadius: 18,
+    backgroundColor: "#48732C",
+    justifyContent: "center",
+    alignItems: "center",
+    position: "absolute",
+    right: 10,
+  },
+  inputHeading: {
+    fontSize: 12,
+    fontFamily: "interMedium",
+    color: "#000",
+    marginLeft: 20,
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  postInput: {
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    marginHorizontal: 20,
+    fontSize: 14,
+    color: "#000",
+    fontFamily: "inter",
+    backgroundColor: "#eee",
+    // height: 40,
+    borderRadius: 8,
+  },
+  modalActions: {
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+  },
+  attachButton: { padding: 10 },
+  postButton: {
+    backgroundColor: "#e0e0e0",
+    paddingHorizontal: 50,
+    paddingVertical: 10,
+  },
+  postButtonActive: { backgroundColor: "#48732C" },
+  postButtonText: {
+    color: "#999",
+    fontSize: 16,
+    fontWeight: "600",
+    fontFamily: "interMedium",
+  },
+  postButtonTextActive: { color: "white" },
+  postVideo: {
+    width: "100%",
+    height: 200,
+  },
+});
+
+export default FlagModal;

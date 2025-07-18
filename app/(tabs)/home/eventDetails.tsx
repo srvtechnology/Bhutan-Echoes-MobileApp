@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   Image,
 } from "react-native";
-import { Bell, Star } from "lucide-react-native";
+import { Bell, Plus, Star } from "lucide-react-native";
 import VideoPlayer from "@/components/VideoPlayer";
 import StarRating from "@/components/StarRating";
 import QuizSection from "@/components/QuizSection";
@@ -20,6 +20,7 @@ import { Video } from "expo-av";
 import QuizResult from "@/components/modals/quizResult";
 import { baseUrl } from "@/config";
 import axios from "axios";
+import AddQuestion from "@/components/modals/addQuestion";
 
 export default function EventDetailsScreen() {
   const [showRatingModal, setShowRatingModal] = useState(false);
@@ -28,6 +29,7 @@ export default function EventDetailsScreen() {
   const [eventRating, setEventRating] = useState(4.2);
   const [isQuizLoading, setIsQuizLoading] = useState(true);
   const [quizes, setQuizes] = useState([]);
+  const [showAddQuestionModal, setShowAddQuestionModal] = useState(false);
   const [comments, setComments] = useState<Comment[]>([
     {
       id: "1",
@@ -109,6 +111,8 @@ export default function EventDetailsScreen() {
     console.log("Poll vote:", pollId, optionId);
   };
 
+  const handleSubmitQuestion = () => {};
+
   useEffect(() => {
     fetchQuizes();
   }, []);
@@ -157,6 +161,16 @@ export default function EventDetailsScreen() {
 
         {/* Rating Button */}
         <View style={styles.ratingButtonSection}>
+          <View style={styles.fabContainer}>
+            <TouchableOpacity
+              style={styles.fab}
+              onPress={() => setShowAddQuestionModal(true)}
+            >
+              <Plus size={22} color="#fff" />
+            </TouchableOpacity>
+            <Text style={styles.fabText}>Have Questions?</Text>
+          </View>
+
           <TouchableOpacity
             style={styles.ratingButton}
             onPress={() => setShowRatingModal(true)}
@@ -183,6 +197,11 @@ export default function EventDetailsScreen() {
         showPostModal={showQuizResultModal}
         setShowPostModal={setShowQuizResultModal}
         score={quizScore}
+      />
+      <AddQuestion
+        showPostModal={showAddQuestionModal}
+        setShowPostModal={setShowAddQuestionModal}
+        onSubmitQuestion={handleSubmitQuestion}
       />
     </SafeAreaView>
   );
@@ -259,6 +278,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 10,
     marginTop: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   ratingButton: {
     backgroundColor: "#D9D9D9",
@@ -277,5 +299,28 @@ const styles = StyleSheet.create({
   },
   bottomSpacing: {
     height: 100,
+  },
+  fabContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  fab: {
+    width: 38,
+    height: 38,
+    borderRadius: 28,
+    backgroundColor: "#48732C",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  fabText: {
+    fontSize: 8,
+    fontFamily: "inter",
+    color: "#000",
+    marginTop: 6,
   },
 });
