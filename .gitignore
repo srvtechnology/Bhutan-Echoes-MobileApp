@@ -8,4 +8,4 @@ expo-env.d.ts
 node_modules
 .env
 
-android/gradle.properties
+# android/gradle.properties
