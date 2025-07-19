@@ -34,6 +34,7 @@ export default function HomeScreen() {
   const [featuredEvents, setFeaturedEvents] = useState([]);
   const [userDetails, setUserDetails] = useState({});
   const [showFlagModal, setShowFlagModal] = useState(false);
+  const [postId, setPostId] = useState("");
 
   const fetchPosts = async () => {
     try {
@@ -80,12 +81,40 @@ export default function HomeScreen() {
     router.push("/(tabs)/home/liveEvents");
   };
 
-  const handleFlagSubmit = (reason: string) => {
+  const handleFlagSubmit = async (reason: string, details: string) => {
     try {
-      const { data } = axios.post(baseUrl + "/flag", {
-        reason: reason,
+      const token = await AsyncStorage.getItem("token");
+      console.log(
+        "======",
+        {
+          reported_id: postId,
+          reason,
+          details,
+        },
+        token,
+        baseUrl + "/user-reports"
+      );
+
+      const res = await axios.post(
+        baseUrl + "/user-reports",
+        {
+          reported_id: postId,
+          reason,
+          details,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      console.log("Flag submitted:", res);
+      Toast.show({
+        type: "success",
+        text1: "User reported successfully.",
       });
-      console.log("Flag submitted:", data);
+      setShowFlagModal(false);
     } catch (error) {
       console.log("Error submitting flag:", error);
     }
@@ -121,7 +150,12 @@ export default function HomeScreen() {
           </View>
           <Text style={styles.username}>Tshering</Text>
         </View>
-        <TouchableOpacity onPress={() => setShowFlagModal(true)}>
+        <TouchableOpacity
+          onPress={() => {
+            setPostId(post.id);
+            setShowFlagModal(true);
+          }}
+        >
           <Flag size={20} color="#CA3115" />
         </TouchableOpacity>
       </View>

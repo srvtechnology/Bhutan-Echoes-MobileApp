@@ -15,7 +15,7 @@ import { Video } from "expo-av";
 interface Props {
   showPostModal: boolean;
   setShowPostModal: (e: any) => void;
-  onFlagSubmit: (post: any) => void;
+  onFlagSubmit: (reason: string, details: string) => void;
 }
 
 const FlagModal: React.FC<Props> = ({
@@ -24,6 +24,7 @@ const FlagModal: React.FC<Props> = ({
   onFlagSubmit,
 }) => {
   const [flagText, setFlagText] = useState("");
+  const [flagDetails, setFlagDetails] = useState("");
 
   return (
     <Modal
@@ -53,9 +54,18 @@ const FlagModal: React.FC<Props> = ({
             <Text style={styles.inputHeading}>Provide Reason</Text>
             <TextInput
               style={styles.postInput}
-              placeholder="Write something! (Like Poems, Photos, Story...)"
+              placeholder="Write something!"
               value={flagText}
               onChangeText={setFlagText}
+            />
+          </View>
+          <View style={{ paddingHorizontal: 20 }}>
+            <Text style={styles.inputHeading}>Details</Text>
+            <TextInput
+              style={styles.postInput}
+              placeholder="Write something!"
+              value={flagDetails}
+              onChangeText={setFlagDetails}
             />
           </View>
 
@@ -65,7 +75,7 @@ const FlagModal: React.FC<Props> = ({
                 styles.postButton,
                 flagText.length > 0 && styles.postButtonActive,
               ]}
-              onPress={() => onFlagSubmit(flagText)}
+              onPress={() => onFlagSubmit(flagText, flagDetails)}
             >
               <Text
                 style={[
