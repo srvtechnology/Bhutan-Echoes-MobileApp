@@ -1,40 +1,43 @@
 {
-  "expo": {
-    "name": "Bhutan Echoes",
-    "slug": "bhutan_echoes",
-    "version": "1.0.2",
-    "orientation": "portrait",
-    "icon": "./assets/appstore.png",
-    "scheme": "myapp",
-    "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
-    "android": {
-      "package": "com.srv.bhutanechos",
-      "versionCode": 1,
-      "permissions": [],
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/playstore.png",
-        "backgroundColor": "#FFFFFF"
-      }
-    },
-    "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.srv.bhutanechos"
-    },
-    "web": {
-      "bundler": "metro",
-      "output": "single",
-      "favicon": "./assets/images/favicon.png"
-    },
-    "plugins": ["expo-router", "expo-web-browser", "expo-font"],
-    "experiments": {
-      "typedRoutes": true
-    },
-    "extra": {
-      "router": {},
-      "eas": {
-        "projectId": "4eb0e85a-8863-45bf-a8b4-26e953db5c0a"
-      }
-    }
-  }
+	"expo": {
+		"name": "Bhutan Echoes",
+		"slug": "bhutan_echoes",
+		"version": "1.0.2",
+		"orientation": "portrait",
+		"icon": "./assets/appstore.png",
+		"scheme": "myapp",
+		"userInterfaceStyle": "automatic",
+		"newArchEnabled": true,
+		"android": {
+			"package": "com.srv.bhutanechos",
+			"versionCode": 1,
+			"permissions": [],
+			"adaptiveIcon": {
+				"foregroundImage": "./assets/playstore.png",
+				"backgroundColor": "#FFFFFF"
+			}
+		},
+		"androidStatusBar": {
+			"backgroundColor": "#48732C"
+		},
+		"ios": {
+			"supportsTablet": true,
+			"bundleIdentifier": "com.srv.bhutanechos"
+		},
+		"web": {
+			"bundler": "metro",
+			"output": "single",
+			"favicon": "./assets/images/favicon.png"
+		},
+		"plugins": ["expo-router", "expo-web-browser", "expo-font"],
+		"experiments": {
+			"typedRoutes": true
+		},
+		"extra": {
+			"router": {},
+			"eas": {
+				"projectId": "4eb0e85a-8863-45bf-a8b4-26e953db5c0a"
+			}
+		}
+	}
 }
