@@ -140,7 +140,7 @@ export default function ResourcesScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+    <View style={styles.container} edges={["top", "left", "right"]}>
       {/* Header */}
       <View style={{ position: "relative" }}>
         <Header title="Resources for free" back={false} />
@@ -218,7 +218,7 @@ export default function ResourcesScreen() {
         setShowFilterModal={setShowFilterModal}
         setSelectedFilter={setSelectedFilter}
       />
-    </SafeAreaView>
+    </View>
   );
 }
 

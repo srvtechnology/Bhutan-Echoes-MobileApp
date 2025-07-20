@@ -158,7 +158,7 @@ export default function MajestyTimelineScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+    <View style={styles.container}>
       {/* Header */}
       <Header back={false} title="Majesty Timeline" />
       <ScrollView
@@ -278,7 +278,7 @@ export default function MajestyTimelineScreen() {
         {/* Bottom Spacing */}
         <View style={styles.bottomSpacing} />
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

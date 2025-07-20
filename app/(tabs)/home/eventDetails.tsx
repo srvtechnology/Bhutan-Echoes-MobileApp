@@ -7,6 +7,7 @@ import {
   SafeAreaView,
   TouchableOpacity,
   Image,
+  ActivityIndicator,
 } from "react-native";
 import { Bell, Plus, Star } from "lucide-react-native";
 import VideoPlayer from "@/components/VideoPlayer";
@@ -21,46 +22,27 @@ import QuizResult from "@/components/modals/quizResult";
 import { baseUrl } from "@/config";
 import axios from "axios";
 import AddQuestion from "@/components/modals/addQuestion";
+import { useLocalSearchParams } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import Toast from "react-native-toast-message";
 
 export default function EventDetailsScreen() {
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [quizScore, setQuizScore] = useState<any>({});
   const [showQuizResultModal, setShowQuizResultModal] = useState(false);
   const [eventRating, setEventRating] = useState(4.2);
+  const [isLoading, setIsLoading] = useState(true);
   const [isQuizLoading, setIsQuizLoading] = useState(true);
   const [quizes, setQuizes] = useState([]);
+  const [isCommentsLoading, setIsCommentsLoading] = useState(true);
+  const [isPollsLoading, setIsPollsLoading] = useState(true);
+  const [polls, setPolls] = useState([]);
   const [showAddQuestionModal, setShowAddQuestionModal] = useState(false);
-  const [comments, setComments] = useState<Comment[]>([
-    {
-      id: "1",
-      userName: "Tshering",
-      rating: 5,
-      comment: "Event is awesome, Really enjoying.",
-      timestamp: new Date(),
-    },
-    {
-      id: "2",
-      userName: "Kinley",
-      rating: 4.5,
-      comment: "Event is awesome, Really enjoying.",
-      timestamp: new Date(),
-    },
-  ]);
+  const [comments, setComments] = useState<Comment[]>();
+  const [liveSessionDetails, setLiveSessionDetails] = useState("");
+  const [userDetails, setUserDetails] = useState({});
 
-  const quizQuestions = [
-    {
-      id: "q1",
-      question: "How old is this festival?",
-      options: ["1 Year", "5 Years", "10 Years", "12 years"],
-      correctAnswer: 2,
-    },
-    {
-      id: "q2",
-      question: "What is the main theme of this festival?",
-      options: ["Literature", "Music", "Dance", "Art"],
-      correctAnswer: 0,
-    },
-  ];
+  const { id } = useLocalSearchParams();
 
   const pollData = {
     id: "poll1",
@@ -73,6 +55,28 @@ export default function EventDetailsScreen() {
     ],
   };
 
+  const fetchUserFromAsync = async () => {
+    try {
+      const user = await AsyncStorage.getItem("user");
+      console.log("user", user);
+      setUserDetails(JSON.parse(user));
+    } catch (error) {
+      console.log("Error fetching user:", error);
+    }
+  };
+
+  const fetchLiveSessionDetails = async () => {
+    setIsLoading(true);
+    try {
+      const { data } = await axios.get(baseUrl + "/live-sessions/" + id);
+      // console.log("Session details", id, data.live_session);
+      setLiveSessionDetails(data.live_session);
+      setIsLoading(false);
+    } catch (error) {
+      console.log("Error fetching Session details:", error);
+      setIsLoading(false);
+    }
+  };
   const fetchQuizes = async () => {
     setIsQuizLoading(true);
     try {
@@ -82,11 +86,37 @@ export default function EventDetailsScreen() {
       setIsQuizLoading(false);
     } catch (error) {
       console.log("Error fetching quizes:", error);
-      // setIsQuizLoading(false);
+      setIsQuizLoading(false);
     }
   };
 
-  const handleRatingSubmit = (rating: number, comment: string) => {
+  const fetchPolls = async () => {
+    setIsPollsLoading(true);
+    try {
+      const { data } = await axios.get(baseUrl + "/live-polls");
+      // console.log("polls ", data.live_polls);
+      setPolls(data.live_polls);
+      setIsPollsLoading(false);
+    } catch (error) {
+      console.log("Error fetching polls :", error);
+      setIsPollsLoading(false);
+    }
+  };
+
+  const fetchComments = async () => {
+    setIsCommentsLoading(true);
+    try {
+      const { data } = await axios.get(baseUrl + "/feedback");
+      // console.log("Comments", data);
+      setComments(data.feedback);
+      setIsCommentsLoading(false);
+    } catch (error) {
+      console.log("Error fetching Session details:", error);
+      setIsCommentsLoading(false);
+    }
+  };
+
+  const handleRatingSubmit = async (rating: number, comment: string) => {
     const newComment: Comment = {
       id: Date.now().toString(),
       userName: "Tshering",
@@ -94,7 +124,37 @@ export default function EventDetailsScreen() {
       comment,
       timestamp: new Date(),
     };
-    setComments((prev) => [newComment, ...prev]);
+    try {
+      const token = await AsyncStorage.getItem("token");
+      const { data } = await axios.post(
+        baseUrl + "/feedback",
+        {
+          session_id: liveSessionDetails?.id,
+          rating,
+          comment,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      // console.log("Rating submitted:", data);
+      Toast.show({
+        type: "success",
+        text1: data.message,
+      });
+      const commentData = { ...data.feedback, user: userDetails };
+
+      setComments((prev) => [commentData, ...prev]);
+    } catch (error) {
+      console.log("Error submitting rating:", error);
+      Toast.show({
+        type: "error",
+        text1: "Error submitting rating. Please try again.",
+      });
+    }
 
     // Update overall event rating (simple average)
     const totalRating = comments.reduce((sum, c) => sum + c.rating, 0) + rating;
@@ -111,16 +171,56 @@ export default function EventDetailsScreen() {
     console.log("Poll vote:", pollId, optionId);
   };
 
-  const handleSubmitQuestion = () => {};
+  const handleSubmitQuestion = async (question: any) => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      const { data } = await axios.post(
+        baseUrl + "/live-questions",
+        {
+          session_id: liveSessionDetails?.id,
+          question: question?.question,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      console.log("Question submitted:", data);
+      Toast.show({
+        type: "success",
+        text1: data.message,
+      });
+    } catch (error) {
+      console.log("Error submitting question:", error);
+      Toast.show({
+        type: "error",
+        text1: "Error submitting question. Please try again.",
+      });
+    }
+  };
 
   useEffect(() => {
+    fetchUserFromAsync();
+    fetchLiveSessionDetails();
     fetchQuizes();
+    fetchPolls();
+    fetchComments();
   }, []);
 
+  if (isLoading) {
+    return (
+      <View style={styles.indicatorContainer}>
+        <ActivityIndicator color={"#48732C"} size={"large"} />
+      </View>
+    );
+  }
+
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       {/* Header */}
-      <Header title="Drukyul’s Literature Arts Festival" />
+      <Header title={liveSessionDetails?.title} />
 
       <ScrollView
         style={styles.scrollView}
@@ -132,86 +232,93 @@ export default function EventDetailsScreen() {
         </View>
         {/* Video Player */}
         <View style={styles.videoSection}>
-          <Video
-            source={{
-              uri: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-            }}
-            style={styles.postVideo}
-            useNativeControls
-            resizeMode="contain"
-            shouldPlay={false}
-            isMuted={false}
-            // poster="https://images.pexels.com/photos/1181673/pexels-photo-1181673.jpeg"
-          />
+          <VideoPlayer url={liveSessionDetails?.youtube_link} />
         </View>
 
         {/* Quiz Section */}
         {!isQuizLoading && (
           <QuizSection
+            isLoading={isQuizLoading}
             questions={quizes.questions}
             onQuizComplete={handleQuizComplete}
           />
         )}
 
         {/* Poll Section */}
-        <PollSection poll={pollData} onVote={handlePollVote} />
+        {!isPollsLoading && (
+          <PollSection
+            poll={pollData}
+            onVote={handlePollVote}
+            isLoading={isPollsLoading}
+          />
+        )}
 
         {/* Comments List */}
-        <CommentsList comments={comments} />
-
-        {/* Rating Button */}
-        <View style={styles.ratingButtonSection}>
-          <View style={styles.fabContainer}>
-            <TouchableOpacity
-              style={styles.fab}
-              onPress={() => setShowAddQuestionModal(true)}
-            >
-              <Plus size={22} color="#fff" />
-            </TouchableOpacity>
-            <Text style={styles.fabText}>Have Questions?</Text>
-          </View>
-
-          <TouchableOpacity
-            style={styles.ratingButton}
-            onPress={() => setShowRatingModal(true)}
-          >
-            <Text style={styles.ratingButtonText}>
-              Give your comments for this event
-            </Text>
-            <Star size={22} color="#FFD700" fill={"#FFD700"} />
-          </TouchableOpacity>
-        </View>
+        {!isCommentsLoading && (
+          <CommentsList comments={comments} isLoading={isCommentsLoading} />
+        )}
 
         {/* Bottom Spacing */}
         <View style={styles.bottomSpacing} />
       </ScrollView>
+
+      {/* Rating Button */}
+      <View style={styles.ratingButtonSection}>
+        <View style={styles.fabContainer}>
+          <TouchableOpacity
+            style={styles.fab}
+            onPress={() => setShowAddQuestionModal(true)}
+          >
+            <Plus size={22} color="#fff" />
+          </TouchableOpacity>
+          <Text style={styles.fabText}>Have Questions?</Text>
+        </View>
+
+        <TouchableOpacity
+          style={styles.ratingButton}
+          onPress={() => setShowRatingModal(true)}
+        >
+          <Text style={styles.ratingButtonText}>
+            Give your comments for this event
+          </Text>
+          <Star size={22} color="#FFD700" fill={"#FFD700"} />
+        </TouchableOpacity>
+      </View>
 
       {/* Rating Modal */}
       <RatingModal
         visible={showRatingModal}
         onClose={() => setShowRatingModal(false)}
         onSubmit={handleRatingSubmit}
-        userName="Tshering"
+        user={userDetails}
       />
       <QuizResult
         showPostModal={showQuizResultModal}
         setShowPostModal={setShowQuizResultModal}
         score={quizScore}
       />
-      <AddQuestion
-        showPostModal={showAddQuestionModal}
-        setShowPostModal={setShowAddQuestionModal}
-        onSubmitQuestion={handleSubmitQuestion}
-      />
-    </SafeAreaView>
+      {showAddQuestionModal && (
+        <AddQuestion
+          showPostModal={showAddQuestionModal}
+          setShowPostModal={setShowAddQuestionModal}
+          onSubmitQuestion={handleSubmitQuestion}
+          user={userDetails}
+        />
+      )}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  indicatorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff",
+  },
   container: {
     flex: 1,
-    backgroundColor: "#f8f9fa",
-    paddingTop: 20,
+    backgroundColor: "#fff",
   },
   scrollView: {
     flex: 1,

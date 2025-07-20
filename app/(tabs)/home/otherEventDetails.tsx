@@ -48,7 +48,7 @@ The primary objective of the camp was to encourage voluntary blood donation, rai
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+    <View style={styles.container}>
       {/* Header */}
       <Header
         title="Blood Donation Camp Organized by
@@ -136,7 +136,7 @@ Bhutan Echoes"
         {/* Bottom Spacing */}
         <View style={styles.bottomSpacing} />
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

@@ -10,7 +10,6 @@ import {
 } from "react-native";
 import { useState, useEffect } from "react";
 import Header from "@/components/header";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Search } from "lucide-react-native";
 import axios from "axios";
@@ -47,7 +46,7 @@ export default function LiveEvents() {
   }, []);
 
   return (
-    <SafeAreaView style={styles.container} edges={["top", "left", "right"]}>
+    <View style={styles.container}>
       {/* Header */}
       <Header title="Live Events" />
       <ScrollView
@@ -84,7 +83,12 @@ export default function LiveEvents() {
             <TouchableOpacity
               key={index + event.id}
               style={styles.featuredCard}
-              onPress={() => router.push("/(tabs)/home/eventDetails")}
+              onPress={() =>
+                router.push({
+                  pathname: "/(tabs)/home/eventDetails",
+                  params: { id: event.id },
+                })
+              }
             >
               <Image
                 source={{ uri: event.thumbnail }}
@@ -103,7 +107,7 @@ export default function LiveEvents() {
 
         <View style={{ height: 100 }} />
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

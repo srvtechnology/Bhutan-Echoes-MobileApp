@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Alert,
   FlatList,
+  ActivityIndicator,
 } from "react-native";
 import QuizResult from "./modals/quizResult";
 import Toast from "react-native-toast-message";
@@ -23,11 +24,13 @@ interface QuizQuestion {
 interface QuizSectionProps {
   questions: QuizQuestion[];
   onQuizComplete?: (score: any) => void;
+  isLoading?: boolean;
 }
 
 export default function QuizSection({
   questions,
   onQuizComplete,
+  isLoading,
 }: QuizSectionProps) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isBtnDisabled, setIsBtnDisabled] = useState(false);
@@ -117,6 +120,14 @@ export default function QuizSection({
       // setIsBtnDisabled(true);
     }
   };
+
+  if (isLoading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator color={"#48732C"} size={"large"} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
