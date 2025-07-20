@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   ratingButton: {
-    backgroundColor: "#D9D9D9",
+    backgroundColor: "#dddddd",
     paddingVertical: 16,
     borderRadius: 14,
     alignItems: "center",

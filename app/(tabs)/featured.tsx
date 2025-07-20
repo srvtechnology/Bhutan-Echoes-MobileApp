@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
     marginLeft: 5,
   },
   royalDescription: {
-    backgroundColor: "#D9D9D9",
+    backgroundColor: "#dddddd",
     paddingHorizontal: 20,
     fontSize: 14,
     color: "#666",
@@ -383,7 +383,7 @@ const styles = StyleSheet.create({
     color: "#999",
   },
   messageSection: {
-    backgroundColor: "#D9D9D9",
+    backgroundColor: "#dddddd",
     padding: 20,
     marginTop: 10,
   },
@@ -428,7 +428,7 @@ const styles = StyleSheet.create({
     width: 24,
   },
   photosSection: {
-    backgroundColor: "#D9D9D9",
+    backgroundColor: "#dddddd",
     paddingTop: 20,
     marginTop: 10,
   },

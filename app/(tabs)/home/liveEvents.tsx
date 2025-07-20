@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   TextInput,
   Image,
-  ActivityIndicator
+  ActivityIndicator,
 } from "react-native";
 import { useState, useEffect } from "react";
 import Header from "@/components/header";
@@ -21,7 +21,7 @@ import moment from "moment";
 export default function LiveEvents() {
   const [events, setEvents] = useState([]);
   const [searchText, setSearchText] = useState("");
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(false);
 
   const filteredEvents = events.filter((event: any) =>
     event.title?.toLowerCase().includes(searchText.toLowerCase())
@@ -64,13 +64,11 @@ export default function LiveEvents() {
             onChangeText={setSearchText}
           />
         </View>
-        {
-          loading && (
-            <View style={{ alignItems: "center", paddingTop: 20 }}>
-              <ActivityIndicator size="large" color="#48732C" />
-            </View>
-          )
-        }
+        {loading && (
+          <View style={{ alignItems: "center", paddingTop: 20 }}>
+            <ActivityIndicator size="large" color="#48732C" />
+          </View>
+        )}
 
         {/* Featured Event Card */}
         {!loading && filteredEvents.length === 0 ? (
@@ -84,7 +82,7 @@ export default function LiveEvents() {
         ) : (
           filteredEvents.map((event: any, index) => (
             <TouchableOpacity
-            key={index + event.id}
+              key={index + event.id}
               style={styles.featuredCard}
               onPress={() => router.push("/(tabs)/home/eventDetails")}
             >
@@ -118,7 +116,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   search: {
-    backgroundColor: "#D9D9D9",
+    backgroundColor: "#dddddd",
     flexDirection: "row",
     alignItems: "center",
     margin: 20,

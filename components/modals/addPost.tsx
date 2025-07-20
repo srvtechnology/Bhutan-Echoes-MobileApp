@@ -11,6 +11,7 @@ import React, { useState } from "react";
 import * as ImagePicker from "expo-image-picker";
 import { Paperclip, X } from "lucide-react-native";
 import { Video } from "expo-av";
+import Toast from "react-native-toast-message";
 
 interface Props {
   showPostModal: boolean;
@@ -45,7 +46,13 @@ const AddPost: React.FC<Props> = ({
   };
 
   const handlePost = async () => {
-    if (!postText && !attachment) return;
+    if (!postText && !attachment) {
+      Toast.show({
+        type: "error",
+        text1: "Please write a post or attach a media.",
+      });
+      return;
+    }
 
     const newPost = {
       id: Date.now().toString(),
@@ -106,7 +113,7 @@ const AddPost: React.FC<Props> = ({
               {attachment.type === "image" ? (
                 <Image
                   source={{ uri: attachment.uri }}
-                  style={{ width: '100%', height: 160, marginVertical: 10 }}
+                  style={{ width: "100%", height: 160, marginVertical: 10 }}
                   resizeMode="contain"
                 />
               ) : (

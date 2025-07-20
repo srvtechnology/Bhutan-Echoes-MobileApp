@@ -23,6 +23,7 @@ import {
   Camera,
   LogOut,
   Pencil,
+  MessageSquareWarning,
 } from "lucide-react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Toast from "react-native-toast-message";
@@ -113,6 +114,16 @@ export default function ProfileScreen() {
       color: "#48732C",
       onPress: () =>
         Linking.openURL("https://bhutanechos.srvtechnology.com/public/privacy"),
+    },
+    {
+      id: "report-abuse",
+      title: "Report Abuse",
+      icon: MessageSquareWarning,
+      color: "#48732C",
+      onPress: () =>
+        Linking.openURL(
+          "https://bhutanechos.srvtechnology.com/public/csae-declaration"
+        ),
     },
     {
       id: "delete",

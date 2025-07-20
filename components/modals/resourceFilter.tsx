@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
   filterIconContainer: {
     width: 120,
     height: 80,
-    backgroundColor: "#D9D9D9",
+    backgroundColor: "#dddddd",
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 12,
@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
   clearFilterButton: {
     marginHorizontal: 20,
     marginVertical: 20,
-    backgroundColor: "#D9D9D9",
+    backgroundColor: "#dddddd",
     paddingVertical: 15,
     alignItems: "center",
   },

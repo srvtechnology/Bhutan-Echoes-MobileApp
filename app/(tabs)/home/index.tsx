@@ -9,7 +9,7 @@ import {
   Image,
 } from "react-native";
 import { useState, useEffect } from "react";
-import { Bell, Plus, X, Flag } from "lucide-react-native";
+import { User, Plus, Flag } from "lucide-react-native";
 import CustomText from "@/components/ui/CustomText";
 import Header from "@/components/header";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -50,6 +50,8 @@ export default function HomeScreen() {
   const fetchUserDetailsFromLocalStorage = async () => {
     try {
       const userDetails = await AsyncStorage.getItem("user");
+      console.log("userDetails", userDetails);
+
       if (userDetails) {
         const parsedUserDetails = JSON.parse(userDetails);
         setUserDetails(parsedUserDetails);
@@ -62,12 +64,9 @@ export default function HomeScreen() {
   const fetchEvents = async () => {
     try {
       const { data } = await axios(baseUrl + "/events");
-      console.log("Events:-----", data);
       const featured = data.events.filter(
-        (event: any) => event.is_featured === "1"
+        (event: any) => event.is_featured === true
       );
-      console.log("=== featured", featured);
-
       setFeaturedEvents(featured);
 
       setEvents(data.events);
@@ -81,39 +80,83 @@ export default function HomeScreen() {
     router.push("/(tabs)/home/liveEvents");
   };
 
+  const handlePostCreated = async (post: any) => {
+    try {
+      console.log("Post created:", post);
+
+      const token = await AsyncStorage.getItem("token");
+
+      const formData = new FormData();
+      // formData.append("title", "");
+      formData.append("description", post.text);
+      formData.append("media_type", post.attachment?.type || "text");
+      if (post?.attachment?.uri) {
+        formData.append("media_url", post.attachment.uri);
+      }
+      formData.append("decade", new Date().getFullYear().toString());
+
+      console.log("formData", formData);
+
+      const res = await axios.post(baseUrl + "/timeline-entries", formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      Toast.show({
+        type: "success",
+        text1: res.data.message,
+      });
+      const postData = {
+        ...res.data.timeline_entry,
+        user_name: userDetails.name,
+        user_image: userDetails.image,
+      };
+      console.log("Post submitted:", postData);
+      const arr = posts;
+      arr.unshift(postData);
+      console.log("------", arr);
+
+      setPosts(arr);
+
+      // setShowFlagModal(false);
+    } catch (error) {
+      console.log("Error submitting post:", error);
+    }
+  };
   const handleFlagSubmit = async (reason: string, details: string) => {
     try {
       const token = await AsyncStorage.getItem("token");
-      console.log(
-        "======",
-        {
-          reported_id: postId,
-          reason,
-          details,
-        },
-        token,
-        baseUrl + "/user-reports"
-      );
 
-      const res = await axios.post(
-        baseUrl + "/user-reports",
-        {
-          reported_id: postId,
-          reason,
-          details,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
+      if (!reason) {
+        Toast.show({
+          type: "error",
+          text1: "Please write a reason.",
+        });
+        return;
+      }
+
+      if (postId?.user_id != userDetails?.id) {
+        const res = await axios.post(
+          baseUrl + "/user-reports",
+          {
+            reported_id: postId?.user_id,
+            reason,
+            details,
           },
-        }
-      );
-      console.log("Flag submitted:", res);
-      Toast.show({
-        type: "success",
-        text1: "User reported successfully.",
-      });
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        console.log("Flag submitted:", res);
+        Toast.show({
+          type: "success",
+          text1: "User reported successfully.",
+        });
+      }
+
       setShowFlagModal(false);
     } catch (error) {
       console.log("Error submitting flag:", error);
@@ -126,52 +169,47 @@ export default function HomeScreen() {
     fetchEvents();
   }, []);
 
-  const featuredEventsa = [
-    {
-      id: 1,
-      image: require("../../../assets/images/banner.png"),
-      title: "Drukyul's Literature and Arts Festival",
-      year: "2025",
-      date: "2nd - 4th August",
-    },
-    // Add more featured events here if needed
-  ];
-
   const renderPost = ({ item: post }: any) => (
     <View style={styles.userPost}>
       <View style={styles.postHeader}>
         <View style={styles.userInfo}>
           <View style={styles.avatar}>
-            <Image
-              source={require("../../../assets/icons/camera.png")}
-              style={styles.avatarImage}
-              resizeMode="cover"
-            />
+            {post.user_image ? (
+              <Image
+                source={{ uri: post.user_image }}
+                style={styles.avatarImage}
+                resizeMode="cover"
+              />
+            ) : (
+              <User size={15} color={"#888"} />
+            )}
           </View>
-          <Text style={styles.username}>Tshering</Text>
+          <Text style={styles.username}>{post.user_name}</Text>
         </View>
-        <TouchableOpacity
-          onPress={() => {
-            setPostId(post.id);
-            setShowFlagModal(true);
-          }}
-        >
-          <Flag size={20} color="#CA3115" />
-        </TouchableOpacity>
+        {post.user_id !== userDetails.id && (
+          <TouchableOpacity
+            onPress={() => {
+              setPostId(post);
+              setShowFlagModal(true);
+            }}
+          >
+            <Flag size={20} color="#CA3115" />
+          </TouchableOpacity>
+        )}
       </View>
 
       <View style={styles.postBody}>
         {post.media_type === "text" && (
-          <>
+          <View style={{ flex: 1, paddingTop: 10 }}>
             <Text style={styles.postTitle}>{post.title}</Text>
             <CustomText variant="inter" style={styles.postContent}>
               {post.description}
             </CustomText>
-          </>
+          </View>
         )}
 
         {post.media_type === "image" && (
-          <View style={{ flex: 1 }}>
+          <View style={{ flex: 1, paddingTop: 10 }}>
             <Text style={styles.postTitle}>{post.title}</Text>
             <CustomText variant="inter" style={styles.postContent}>
               {post.description}
@@ -185,8 +223,8 @@ export default function HomeScreen() {
         )}
 
         {post.media_type === "video" && (
-          <View style={{ flex: 1 }}>
-            <Text style={styles.postTitle}>{post.title}</Text>
+          <View style={{ flex: 1, paddingTop: 10 }}>
+            {post.title && <Text style={styles.postTitle}>{post.title}</Text>}
             <CustomText variant="inter" style={styles.postContent}>
               {post.description}
             </CustomText>
@@ -353,6 +391,7 @@ export default function HomeScreen() {
       <AddPost
         setShowPostModal={setShowPostModal}
         showPostModal={showPostModal}
+        onPostCreated={handlePostCreated}
       />
       {/* Flag Modal */}
       <FlagModal
@@ -367,7 +406,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f8f9fa",
+    backgroundColor: "#fff",
   },
   scrollView: {
     flex: 1,
@@ -387,19 +426,19 @@ const styles = StyleSheet.create({
   },
   featuredContent: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.3)",
+    backgroundColor: "rgba(0,0,0,0.4)",
     justifyContent: "center",
     alignItems: "center",
   },
   featuredTitle: {
     fontSize: 17,
-    fontFamily: "interMedium",
+    fontFamily: "interBold",
     color: "white",
     marginBottom: 8,
   },
   saveButtonText: {
     color: "white",
-    fontSize: 8,
+    fontSize: 10,
     fontFamily: "interBold",
   },
   section: {
@@ -501,19 +540,19 @@ const styles = StyleSheet.create({
     color: "#000",
   },
   postBody: {
-    backgroundColor: "#D9D9D9",
+    backgroundColor: "#dddddd",
   },
   postTitle: {
     fontSize: 14,
     fontFamily: "interBold",
-    color: "#000",
+    color: "#444",
     paddingHorizontal: 20,
-    paddingVertical: 10,
+    marginBottom: 10,
   },
   postContent: {
     fontSize: 14,
     fontFamily: "inter",
-    color: "#000",
+    color: "#444",
     flexShrink: 1,
     paddingHorizontal: 20,
     marginBottom: 10,
