@@ -1,12 +1,16 @@
-import { useEffect } from 'react';
-import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import { useFonts, Inter_400Regular, Inter_500Medium, Inter_700Bold } from '@expo-google-fonts/inter';
-import { View, ActivityIndicator, SafeAreaView } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import Toast from 'react-native-toast-message';
-import { ToastRoot } from '@/components/ToastHelper';
-
+import { useEffect } from "react";
+import { Stack } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import {
+  useFonts,
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_700Bold,
+} from "@expo-google-fonts/inter";
+import { View, ActivityIndicator, SafeAreaView } from "react-native";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import Toast from "react-native-toast-message";
+import { ToastRoot } from "@/components/ToastHelper";
 
 declare global {
   interface Window {
@@ -16,7 +20,7 @@ declare global {
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({
-    inter:Inter_400Regular,
+    inter: Inter_400Regular,
     interMedium: Inter_500Medium,
     interBold: Inter_700Bold,
   });
@@ -25,9 +29,9 @@ export default function RootLayout() {
     window.frameworkReady?.();
   }, []);
 
-   if (!fontsLoaded) {
+  if (!fontsLoaded) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
         <ActivityIndicator />
       </View>
     );
@@ -41,11 +45,12 @@ export default function RootLayout() {
         <Stack.Screen name="auth" />
         <Stack.Screen name="signup" />
         <Stack.Screen name="forgot" />
+        <Stack.Screen name="notification" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="+not-found" />
       </Stack>
       <Toast />
       <ToastRoot />
-      </SafeAreaProvider>
+    </SafeAreaProvider>
   );
 }

@@ -21,7 +21,10 @@ const Header = ({ title, back = true }: { title: string; back?: boolean }) => {
         <Text style={styles.headerTitle}>{title}</Text>
       </View>
       <View style={styles.headerRight}>
-        <TouchableOpacity style={styles.notificationButton}>
+        <TouchableOpacity
+          style={styles.notificationButton}
+          onPress={() => router.push("/notification")}
+        >
           <Bell size={24} color={"#48732C"} />
           <View style={styles.notificationBadge}>
             <Text style={styles.notificationBadgeText}>3</Text>
