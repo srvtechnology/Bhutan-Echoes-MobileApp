@@ -37,6 +37,11 @@ export default function QuizSection({
   const [selectedAnswers, setSelectedAnswers] = useState<{
     [key: string]: number;
   }>({});
+  const [selectedAnswer, setSelectedAnswer] = useState({
+    questionId: "",
+    answerId: "",
+    liveQuizId: "",
+  });
   const currentQuestion = questions[currentQuestionIndex];
 
   const handleAnswerSelect = (optionIndex: number) => {
@@ -61,7 +66,7 @@ export default function QuizSection({
       );
 
       const { data } = await axios.post(
-        `${baseUrl}/live-quizzes/1/questions/${questionId}/answer `,
+        `${baseUrl}/live-quizzes/${liveQuizId}/questions/${questionId}/answer `,
         { selected_answer_id: answerId },
         {
           headers: {
@@ -70,7 +75,43 @@ export default function QuizSection({
           },
         }
       );
-      console.log("submit answer call", data);
+      // console.log("submit answer call", data);
+    } catch (error) {
+      console.log("submit answer error", error);
+
+      Toast.show({
+        type: "error",
+        text1: "Error submitting answer",
+        text2: "Please try again.",
+      });
+    }
+  };
+  const handleFinalQuizSumit = async (
+    liveQuizId: string | number,
+    questionId: string | number,
+    answerId: string | number
+  ) => {
+    console.log(" When Submit called");
+
+    try {
+      submitAnswer(liveQuizId, questionId, answerId);
+      const token = await AsyncStorage.getItem("token");
+      const { data } = await axios.get(
+        `${baseUrl}/live-quizzes/${liveQuizId}/my-answers`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const answers = data.user_answers;
+      // console.log("All answers", answers);
+
+      // Calculate score
+      const score = answers.reduce((acc, answer) => {
+        return acc + (answer.is_correct ? 1 : 0);
+      }, 0);
 
       Toast.show({
         type: "success",
@@ -78,9 +119,10 @@ export default function QuizSection({
       });
       onQuizComplete?.({
         total: questions.length,
-        correct: data.user_right,
-        wrong: data.user_wrong,
+        correct: score,
+        wrong: questions.length - score,
       });
+      setIsBtnDisabled(true);
     } catch (error) {
       console.log("submit answer error", error);
 
@@ -101,23 +143,18 @@ export default function QuizSection({
     }
 
     if (currentQuestionIndex < questions.length - 1) {
+      submitAnswer(
+        selectedAnswer.liveQuizId,
+        selectedAnswer.questionId,
+        selectedAnswer.answerId
+      );
       setCurrentQuestionIndex((prev) => prev + 1);
     } else {
-      // submitAnswer()
-      // Calculate score
-      const score = questions.reduce((acc, question) => {
-        const userAnswer = selectedAnswers[question.id];
-        return {
-          liveQuizId: question.live_quiz_id,
-          questionId: question.id,
-          answerId: question.answers[userAnswer].id,
-        };
-        // return acc + (question.answers[userAnswer].is_correct ? 1 : 0);
-      }, 0);
-      console.log("score", score);
-      submitAnswer(score.liveQuizId, score.questionId, score.answerId);
-
-      // setIsBtnDisabled(true);
+      handleFinalQuizSumit(
+        selectedAnswer.liveQuizId,
+        selectedAnswer.questionId,
+        selectedAnswer.answerId
+      );
     }
   };
 
@@ -148,7 +185,15 @@ export default function QuizSection({
                 !isBtnDisabled &&
                 styles.selectedOption,
             ]}
-            onPress={() => handleAnswerSelect(index)}
+            onPress={() => {
+              handleAnswerSelect(index);
+
+              setSelectedAnswer({
+                questionId: currentQuestion.id,
+                answerId: option.id,
+                liveQuizId: currentQuestion.live_quiz_id,
+              });
+            }}
           >
             <Text
               style={[

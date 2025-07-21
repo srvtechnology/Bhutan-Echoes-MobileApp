@@ -1,3 +1,6 @@
+import { baseUrl } from "@/config";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
 import React, { useState } from "react";
 import {
   View,
@@ -7,20 +10,8 @@ import {
   ActivityIndicator,
 } from "react-native";
 
-interface PollOption {
-  id: string;
-  text: string;
-  votes: number;
-}
-
-interface Poll {
-  id: string;
-  question: string;
-  options: PollOption[];
-}
-
 interface PollSectionProps {
-  poll: Poll;
+  poll: any[];
   onVote?: (pollId: string, optionId: string) => void;
   isLoading?: boolean;
 }
@@ -32,22 +23,86 @@ export default function PollSection({
 }: PollSectionProps) {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [hasVoted, setHasVoted] = useState(false);
+  const [selectedOptions, setSelectedOptions] = useState<{
+    [key: number]: string | null;
+  }>({});
+  const [votedPolls, setVotedPolls] = useState<{ [key: number]: boolean }>({});
+  const [voteResults, setVoteResults] = useState<any[]>(poll);
 
-  const totalVotes = poll.options.reduce(
-    (sum, option) => sum + option.votes,
-    0
-  );
+  const totalVotes = poll.map((e) => ({
+    ...e,
+    options: e.options.map((option) => ({
+      ...option,
+      votes: 0,
+    })),
+  }));
 
-  const handleVote = (optionId: string) => {
-    if (!hasVoted) {
-      setSelectedOption(optionId);
+  const handleVote = (pollId: number, optionId: string) => {
+    if (!votedPolls[pollId]) {
+      setSelectedOptions((prev) => ({ ...prev, [pollId]: optionId }));
     }
   };
 
-  const handleSubmit = () => {
+  const getPollResult = async (pollId: number) => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      const { data } = await axios.get(
+        `${baseUrl}/live-polls/${pollId}/results`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      const votesMap = new Map();
+      data.results.forEach((result) => {
+        votesMap.set(result.option_id, result.votes);
+      });
+
+      const updatedPolls = voteResults.map((p) => {
+        if (p.id === pollId) {
+          const updatedOptions = p.options.map((option) => ({
+            ...option,
+            votes: votesMap.get(option.id) || 0,
+          }));
+          return { ...p, options: updatedOptions };
+        }
+        return p;
+      });
+
+      setVoteResults(updatedPolls);
+      setVotedPolls((prev) => ({ ...prev, [pollId]: true }));
+    } catch (error) {
+      console.error("Error fetching poll results:", error);
+    }
+  };
+
+  const submitPoll = async (pollId: number) => {
+    const selectedOption = selectedOptions[pollId];
+    if (!selectedOption) return;
+
+    try {
+      const token = await AsyncStorage.getItem("token");
+      const { data } = await axios.post(
+        `${baseUrl}/live-polls/${pollId}/vote`,
+        { option_id: selectedOption },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      getPollResult(pollId);
+    } catch (error) {
+      console.error("Error submitting poll:", error);
+    }
+  };
+
+  const handleSubmit = (pollId: string | number) => {
     if (selectedOption && !hasVoted) {
-      setHasVoted(true);
-      onVote?.(poll.id, selectedOption);
+      submitPoll(pollId);
+      // setHasVoted(true);
+      // onVote?.(pollId, selectedOption);
     }
   };
 
@@ -64,72 +119,79 @@ export default function PollSection({
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.question}>{poll.question}</Text>
+    <View>
+      {voteResults.map((poll) => {
+        const selected = selectedOptions[poll.id];
+        const hasVoted = votedPolls[poll.id];
+        return (
+          <View key={poll.id} style={styles.container}>
+            <Text style={styles.question}>{poll.question}</Text>
 
-      <View style={styles.optionsContainer}>
-        {poll.options.map((option) => {
-          const percentage = getVotePercentage(option.votes);
-          const isSelected = selectedOption === option.id;
+            <View style={styles.optionsContainer}>
+              {poll.options.map((option) => {
+                const isSelected = selected === option.id;
+                const percentage = hasVoted ? option.votes : 0;
 
-          return (
-            <TouchableOpacity
-              key={option.id}
-              style={[
-                styles.optionButton,
-                isSelected && styles.selectedOption,
-                hasVoted && styles.votedOption,
-              ]}
-              onPress={() => handleVote(option.id)}
-              disabled={hasVoted}
-            >
-              {hasVoted && (
-                <View
-                  style={[styles.progressBar, { width: `${percentage}%` }]}
-                />
-              )}
-              <View style={styles.optionContent}>
+                return (
+                  <TouchableOpacity
+                    key={option.id}
+                    style={[
+                      styles.optionButton,
+                      isSelected && styles.selectedOption,
+                      hasVoted && styles.votedOption,
+                    ]}
+                    onPress={() => handleVote(poll.id, option.id)}
+                    disabled={hasVoted}
+                  >
+                    {hasVoted && (
+                      <View
+                        style={[
+                          styles.progressBar,
+                          { width: `${percentage}%` },
+                        ]}
+                      />
+                    )}
+                    <View style={styles.optionContent}>
+                      <Text
+                        style={[
+                          styles.optionText,
+                          isSelected && styles.selectedOptionText,
+                          hasVoted && styles.votedOptionText,
+                        ]}
+                      >
+                        {option.option}
+                      </Text>
+                      {hasVoted && (
+                        <Text style={styles.percentageText}>{percentage}%</Text>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            {!hasVoted && (
+              <TouchableOpacity
+                style={[
+                  styles.submitButton,
+                  selected && styles.submitButtonActive,
+                ]}
+                onPress={() => submitPoll(poll.id)}
+                disabled={!selected}
+              >
                 <Text
                   style={[
-                    styles.optionText,
-                    isSelected && styles.selectedOptionText,
-                    hasVoted && styles.votedOptionText,
+                    styles.submitButtonText,
+                    selected && styles.submitButtonTextActive,
                   ]}
                 >
-                  {option.text}
+                  Submit
                 </Text>
-                {hasVoted && (
-                  <Text style={styles.percentageText}>{percentage}%</Text>
-                )}
-              </View>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-
-      {!hasVoted && (
-        <TouchableOpacity
-          style={[
-            styles.submitButton,
-            selectedOption && styles.submitButtonActive,
-          ]}
-          onPress={handleSubmit}
-          disabled={!selectedOption}
-        >
-          <Text
-            style={[
-              styles.submitButtonText,
-              selectedOption && styles.submitButtonTextActive,
-            ]}
-          >
-            Submit
-          </Text>
-        </TouchableOpacity>
-      )}
-
-      {hasVoted && (
-        <Text style={styles.totalVotesText}>Total votes: {totalVotes}</Text>
-      )}
+              </TouchableOpacity>
+            )}
+          </View>
+        );
+      })}
     </View>
   );
 }

@@ -65,7 +65,7 @@ export default function AuthScreen() {
       console.log("Login success:", response.data);
       await AsyncStorage.setItem("token", response.data.token);
       await AsyncStorage.setItem("user", JSON.stringify(response.data.user));
-      showToast("success", "Login Failed ", response?.data?.message);
+      showToast("success", "Login Successful ", response?.data?.message);
       router.replace("/(tabs)/home");
     } catch (error) {
       console.log("Login error:", error);

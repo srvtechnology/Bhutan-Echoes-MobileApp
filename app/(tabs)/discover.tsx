@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,10 +6,10 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  Modal,
+  Platform,
   Alert,
+  PermissionsAndroid,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import {
   Search,
   Filter,
@@ -19,88 +19,352 @@ import {
   FileText,
   Volume2,
 } from "lucide-react-native";
+import RNFS from "react-native-fs";
 import Header from "@/components/header";
 import ResourceFilter from "@/components/modals/resourceFilter";
+import axios from "axios";
+import { baseUrl } from "@/config";
+import * as FileSystem from "expo-file-system";
+import Toast from "react-native-toast-message";
+import * as MediaLibrary from "expo-media-library";
+import Share from "react-native-share";
+import {
+  check,
+  request,
+  PERMISSIONS,
+  RESULTS,
+  openSettings,
+} from "react-native-permissions";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import RNFetchBlob from "rn-fetch-blob";
 
 interface Resource {
   id: string;
   title: string;
   description: string;
-  type: "PDF" | "Audio";
-  url: string;
+  type: "ebook" | "audio";
+  file_path?: string;
+  audio_url?: string;
   size?: string;
+  author?: string;
 }
 
 export default function ResourcesScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilterModal, setShowFilterModal] = useState(false);
-  const [selectedFilter, setSelectedFilter] = useState<"All" | "PDF" | "Audio">(
-    "All"
-  );
-
-  const resources: Resource[] = [
-    {
-      id: "1",
-      title: "Resource 1 - PDF",
-      description:
-        "Lorem Ipsum is simply dummy text of the printing and typesetting industry.",
-      type: "PDF",
-      url: "https://example.com/resource1.pdf",
-      size: "2.5 MB",
-    },
-    {
-      id: "2",
-      title: "Resource 2 - Audio",
-      description:
-        "Lorem Ipsum is simply dummy text of the printing and typesetting industry.",
-      type: "Audio",
-      url: "https://example.com/resource2.mp3",
-      size: "15.2 MB",
-    },
-    {
-      id: "3",
-      title: "Resource 1 - PDF",
-      description:
-        "Lorem Ipsum is simply dummy text of the printing and typesetting industry.",
-      type: "PDF",
-      url: "https://example.com/resource3.pdf",
-      size: "1.8 MB",
-    },
-    {
-      id: "4",
-      title: "Bhutanese Literature Collection",
-      description:
-        "A comprehensive collection of traditional Bhutanese literary works and poems.",
-      type: "PDF",
-      url: "https://example.com/bhutan-literature.pdf",
-      size: "5.2 MB",
-    },
-    {
-      id: "5",
-      title: "Traditional Folk Songs",
-      description:
-        "Audio recordings of traditional Bhutanese folk songs and cultural music.",
-      type: "Audio",
-      url: "https://example.com/folk-songs.mp3",
-      size: "25.8 MB",
-    },
-  ];
+  const [selectedFilter, setSelectedFilter] = useState<
+    "All" | "ebook" | "audio"
+  >("All");
+  const [resources, setResources] = useState([]);
+  const [hasPermission, setHasPermission] = useState(false);
 
   const filteredResources = resources.filter((resource) => {
     const matchesSearch =
-      resource.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      resource.description.toLowerCase().includes(searchQuery.toLowerCase());
+      resource?.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      resource?.author.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesFilter =
       selectedFilter === "All" || resource.type === selectedFilter;
     return matchesSearch && matchesFilter;
   });
+  // Request permission (Android only)
+
+  const checkStoragePermission = async () => {
+    if (Platform.OS === "android") {
+      const result = await PermissionsAndroid.check(
+        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE
+      );
+      console.log("==== result=====", result);
+
+      if (!result) {
+        const resultRequest = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE
+        );
+        console.log("==== resultRequest=====", resultRequest);
+
+        if (resultRequest === "never_ask_again") {
+          Alert.alert(
+            "Permission Needed",
+            "Storage permission is required to download files. Please enable it in settings.",
+            [
+              { text: "Cancel", style: "cancel" },
+              {
+                text: "Open Settings",
+                onPress: () => openSettings(),
+              },
+            ]
+          );
+          setHasPermission(false);
+        } else if (resultRequest === "granted") {
+          setHasPermission(true);
+        } else {
+          setHasPermission(false);
+        }
+      } else {
+        setHasPermission(true);
+      }
+    } else {
+      const result = await request(PERMISSIONS.IOS.MEDIA_LIBRARY);
+      setHasPermission(result === RESULTS.GRANTED);
+    }
+  };
+
+  const shareFileiOS = async (filePath: string) => {
+    try {
+      await Share.open({
+        url: `file://${filePath}`,
+        type: "*/*",
+        showAppsToView: true,
+      });
+    } catch (e) {
+      console.log("Share cancelled");
+    }
+  };
+  const getDownloadPath = async (fileName: string): Promise<string> => {
+    if (Platform.OS === "android") {
+      const folderPath = `${RNFS.DownloadDirectoryPath}/BhutanEchoes`;
+      const exists = await RNFS.exists(folderPath);
+      if (!exists) {
+        await RNFS.mkdir(folderPath);
+      }
+      return `${folderPath}/${fileName}`;
+    } else {
+      const folderPath = `${RNFS.DocumentDirectoryPath}/BhutanEchoes`;
+      const exists = await RNFS.exists(folderPath);
+      if (!exists) {
+        await RNFS.mkdir(folderPath);
+      }
+      return `${folderPath}/${fileName}`;
+    }
+  };
+
+  const requestStoragePermission = async () => {
+    if (Platform.OS === "android") {
+      const result = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE
+      );
+      console.log("result", result);
+
+      return result === PermissionsAndroid.RESULTS.GRANTED;
+    }
+    return true;
+  };
+
+  const checkPermission = async (url: string, name: string) => {
+    const perm =
+      Platform.OS === "android" && Platform.Version >= 33
+        ? PERMISSIONS.ANDROID.READ_MEDIA_AUDIO
+        : PERMISSIONS.ANDROID.WRITE_EXTERNAL_STORAGE;
+
+    let status = await check(perm);
+
+    if (status === RESULTS.BLOCKED) {
+      Alert.alert(
+        "Permission blocked",
+        "You must allow storage permission in Settings",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Settings", onPress: () => openSettings() },
+        ]
+      );
+      return false;
+    }
+
+    if (status === RESULTS.DENIED) {
+      status = await request(perm);
+    }
+
+    if (status === RESULTS.GRANTED) {
+      actualDownload(url, name);
+    }
+    return false;
+  };
+
+  const actualDownload = async (url: string, name: string) => {
+    const { dirs } = RNFetchBlob.fs;
+    console.log("dirs", dirs);
+
+    const dirToSave =
+      Platform.OS === "ios" ? dirs.DocumentDir : dirs.DownloadDir;
+    console.log("dirToSave", dirToSave);
+
+    const configfb = {
+      fileCache: true,
+      addAndroidDownloads: {
+        useDownloadManager: true,
+        notification: true,
+        mediaScannable: true,
+        title: name,
+        path: `${dirs.DownloadDir}/${name}`,
+      },
+      useDownloadManager: true,
+      notification: true,
+      mediaScannable: true,
+      title: name,
+      path: `${dirToSave}/${name}`,
+    };
+    const configOptions = Platform.select({
+      ios: configfb,
+      android: configfb,
+    });
+
+    console.log("configOptions", configOptions);
+
+    try {
+      await RNFetchBlob.config(configOptions || {})
+        .fetch("GET", url, {})
+        .then((res) => {
+          if (Platform.OS === "ios") {
+            RNFetchBlob.fs.writeFile(configfb.path, res.data, "base64");
+            RNFetchBlob.ios.previewDocument(configfb.path);
+          }
+          if (Platform.OS === "android") {
+            console.log("file downloaded");
+          }
+        })
+        .catch((e) => {
+          console.log("invoice Download==>", e);
+        });
+    } catch (error) {
+      console.log("Error downloading file:", error);
+    }
+  };
+
+  const getPermission = async (url: string, name: string) => {
+    if (Platform.OS === "ios") {
+      actualDownload(url, name);
+    } else {
+      try {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE
+        );
+        console.log("granted ====", granted);
+
+        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+          actualDownload(url, name);
+        } else {
+          console.log("please grant permission");
+        }
+      } catch (err) {
+        console.log("permission error", err);
+      }
+    }
+  };
+
+  // useEffect(() => {
+  //   checkStoragePermission();
+  // }, []);
+
+  const downloadFile = async (fileUrl: string, fileName: string) => {
+    // requestStoragePermission();
+    // const canDownload = await checkStoragePermission();
+    // if (!canDownload) {
+    //   Alert.alert("Permission denied");
+    //   return;
+    // }
+    try {
+      // if (Platform.OS === "android") {
+      //   const hasPermission = await requestStoragePermission();
+      //   console.log("hasPermission", hasPermission);
+
+      //   if (!hasPermission) {
+      //     Alert.alert(
+      //       "Permission denied",
+      //       "Cannot download without permission."
+      //     );
+      //     return;
+      //   }
+      // }
+
+      const path = await getDownloadPath(fileName);
+      const token = await AsyncStorage.getItem("token");
+      const options = {
+        fromUrl: fileUrl,
+        toFile: `${path}/file.pdf`,
+        headers: {
+          Authorization: `Bearer ${token}`, // or custom header key
+        },
+      };
+      console.log("options", options);
+
+      const download = RNFS.downloadFile(options);
+      console.log("Download Result:", download);
+
+      const { statusCode } = await download.promise;
+
+      if (statusCode === 200) {
+        Alert.alert("✅ Download Complete", "File saved successfully!");
+
+        if (Platform.OS === "ios") {
+          await Share.open({
+            url: `file://${path}`,
+            title: "Share File",
+          });
+        }
+      } else {
+        Alert.alert("❌ Download Failed", `Status code: ${statusCode}`);
+      }
+
+      // const downloadPath =
+      //   Platform.OS === "android"
+      //     ? `${RNFS.DownloadDirectoryPath}/${fileName}`
+      //     : `${RNFS.DocumentDirectoryPath}/${fileName}`; // iOS sandbox
+
+      // const options = {
+      //   fromUrl: fileUrl,
+      //   toFile: downloadPath,
+      //   background: true,
+      //   discretionary: true,
+      // };
+      // try {
+      //   if (Platform.OS === "ios") {
+      //     shareFileiOS(downloadPath);
+      //   }
+      //   const res = await RNFS.downloadFile(options).promise;
+      //   if (res.statusCode === 200) {
+      //     Alert.alert(
+      //       "Download complete",
+      //       `File saved to ${
+      //         Platform.OS === "android"
+      //           ? "Downloads folder"
+      //           : "Files > App folder"
+      //       }`
+      //     );
+      //   } else {
+      //     Alert.alert("Download failed", `Status code: ${res.statusCode}`);
+      //   }
+
+      console.log("✅ File downloaded to:", path);
+      Toast.show({
+        type: "success",
+        text1: "Download successful.",
+      });
+    } catch (error) {
+      console.error("❌ Download error:", error);
+      Toast.show({
+        type: "error",
+        text1: "Download failed.",
+      });
+    }
+  };
 
   const handleDownload = (resource: Resource) => {
     Alert.alert("Download", `Download ${resource.title}?`, [
       { text: "Cancel", style: "cancel" },
       {
         text: "Download",
-        onPress: () => console.log("Downloading:", resource.title),
+        onPress: () => {
+          const url =
+            resource?.type === "ebook"
+              ? resource?.file_path
+              : resource?.audio_url;
+          const name = url?.split("/").pop();
+
+          console.log("name", name);
+
+          // downloadFile(url, name);
+          // getPermission(url, name);
+          checkPermission(url, name);
+        },
       },
     ]);
   };
@@ -115,9 +379,9 @@ export default function ResourcesScreen() {
 
   const getResourceIcon = (type: string) => {
     switch (type) {
-      case "PDF":
+      case "ebook":
         return <FileText size={41} color="#FF6B6B" />;
-      case "Audio":
+      case "audio":
         return <Volume2 size={41} color="#48732C" />;
       default:
         return <FileText size={41} color="#666" />;
@@ -130,7 +394,7 @@ export default function ResourcesScreen() {
         style={styles.viewButton}
         onPress={() => handleView(resource)}
       >
-        {resource.type === "PDF" ? (
+        {resource.type === "ebook" ? (
           <Text style={styles.viewButtonText}>View</Text>
         ) : (
           <Play size={16} color="white" />
@@ -138,6 +402,21 @@ export default function ResourcesScreen() {
       </TouchableOpacity>
     );
   };
+
+  const fetchMedia = async () => {
+    try {
+      const { data } = await axios.get(baseUrl + "/media");
+
+      console.log("media", data);
+      setResources(data?.media);
+    } catch (error) {
+      console.error("Error fetching media:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchMedia();
+  }, []);
 
   return (
     <View style={styles.container} edges={["top", "left", "right"]}>
@@ -148,7 +427,7 @@ export default function ResourcesScreen() {
           style={styles.filterButton}
           onPress={() => setShowFilterModal(true)}
         >
-          <Filter size={24} color="#48732C" />
+          <Filter size={24} color="#fff" />
         </TouchableOpacity>
       </View>
 
@@ -172,16 +451,18 @@ export default function ResourcesScreen() {
         showsVerticalScrollIndicator={false}
       >
         {filteredResources.map((resource) => (
-          <View key={resource.id} style={styles.resourceItem}>
+          <View key={resource?.id} style={styles.resourceItem}>
             <View style={styles.resourceContent}>
               <View style={styles.resourceIcon}>
-                {getResourceIcon(resource.type)}
+                {getResourceIcon(resource?.type)}
               </View>
               <View style={styles.resourceInfo}>
-                <Text style={styles.resourceTitle}>{resource.title}</Text>
+                <Text style={styles.resourceTitle}>{resource?.title}</Text>
+
                 <Text style={styles.resourceDescription}>
-                  {resource.description}
+                  {resource?.author || ""}
                 </Text>
+
                 {/* {resource.size && (
                   <Text style={styles.resourceSize}>Size: {resource.size}</Text>
                 )} */}
@@ -229,8 +510,8 @@ const styles = StyleSheet.create({
   },
   filterButton: {
     position: "absolute",
-    right: 55,
-    top: 18,
+    right: 80,
+    top: 24,
   },
   searchSection: {
     paddingHorizontal: 20,
@@ -287,7 +568,7 @@ const styles = StyleSheet.create({
   resourceTitle: {
     fontSize: 16,
     color: "#000",
-    marginBottom: 4,
+
     fontFamily: "inter",
   },
   resourceDescription: {

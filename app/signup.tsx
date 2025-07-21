@@ -96,13 +96,6 @@ export default function SignUpScreen() {
 
     setLoading(true);
     try {
-      console.log(baseUrl + "/register", {
-        name,
-        email,
-        password,
-        password_confirmation: confirmPassword,
-      });
-
       const response = await axios.post(baseUrl + "/register", {
         name,
         email,
@@ -113,7 +106,7 @@ export default function SignUpScreen() {
       // Handle success (store token, user data, etc.)
       console.log("Registration success:", response.data);
       console.log(name, email, response.data.user.id);
-      
+
       await sendVerificationEmail(name, email, response.data.user.id);
 
       router.replace("/auth");

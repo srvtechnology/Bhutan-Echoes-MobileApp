@@ -16,7 +16,7 @@ export default function ResourceFilter({
 }: {
   showFilterModal: boolean;
   setShowFilterModal: (e: boolean) => void;
-  setSelectedFilter: (e: "All" | "PDF" | "Audio") => void;
+  setSelectedFilter: (e: "All" | "ebook" | "audio") => void;
 }) {
   return (
     <Modal
@@ -38,7 +38,7 @@ export default function ResourceFilter({
             <TouchableOpacity
               style={styles.filterOption}
               onPress={() => {
-                setSelectedFilter("PDF");
+                setSelectedFilter("ebook");
                 setShowFilterModal(false);
               }}
             >
@@ -51,7 +51,7 @@ export default function ResourceFilter({
             <TouchableOpacity
               style={styles.filterOption}
               onPress={() => {
-                setSelectedFilter("Audio");
+                setSelectedFilter("audio");
                 setShowFilterModal(false);
               }}
             >

@@ -247,7 +247,7 @@ export default function EventDetailsScreen() {
         {/* Poll Section */}
         {!isPollsLoading && (
           <PollSection
-            poll={pollData}
+            poll={polls}
             onVote={handlePollVote}
             isLoading={isPollsLoading}
           />
