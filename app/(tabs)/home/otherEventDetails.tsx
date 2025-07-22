@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -11,11 +11,16 @@ import {
 import { Bell, Calendar, MapPin, Users, Clock } from "lucide-react-native";
 import Header from "@/components/header";
 import { SafeAreaView } from "react-native-safe-area-context";
+import axios from "axios";
+import { baseUrl } from "@/config";
+import { useLocalSearchParams } from "expo-router";
+import RenderHtml from "react-native-render-html";
 
 const { width: screenWidth } = Dimensions.get("window");
 
 export default function OtherEventsScreen() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [eventDetails, setEventDetails] = useState({});
 
   const eventImages = [
     "https://images.pexels.com/photos/339620/pexels-photo-339620.jpeg",
@@ -23,7 +28,7 @@ export default function OtherEventsScreen() {
     "https://images.pexels.com/photos/6823568/pexels-photo-6823568.jpeg",
   ];
 
-  const eventDetails = {
+  const eventDetailss = {
     title: "Blood Donation Camp Organized by Bhutan Echoes",
     date: "20-July-2025",
     venue: "Bhutan Echoes Office Ground",
@@ -47,13 +52,26 @@ The primary objective of the camp was to encourage voluntary blood donation, rai
     setCurrentImageIndex(imageIndex);
   };
 
+  const { id } = useLocalSearchParams();
+
+  const fetchEventDetails = async () => {
+    try {
+      const { data } = await axios.get(`${baseUrl}/events/${id}`);
+      console.log("Event details:", data);
+      setEventDetails(data.event);
+    } catch (error) {
+      console.log("Error fetching event details:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchEventDetails();
+  }, []);
+
   return (
     <View style={styles.container}>
       {/* Header */}
-      <Header
-        title="Blood Donation Camp Organized by
-Bhutan Echoes"
-      />
+      <Header title={eventDetails.title} />
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
@@ -67,7 +85,7 @@ Bhutan Echoes"
             onScroll={handleImageScroll}
             scrollEventThrottle={16}
           >
-            {eventImages.map((image, index) => (
+            {eventDetails?.banner_images?.map((image, index) => (
               <Image
                 key={index}
                 source={{ uri: image }}
@@ -79,7 +97,7 @@ Bhutan Echoes"
 
           {/* Image Indicators */}
           <View style={styles.imageIndicators}>
-            {eventImages.map((_, index) => (
+            {eventDetails?.banner_images?.map((_, index) => (
               <View
                 key={index}
                 style={[
@@ -93,6 +111,12 @@ Bhutan Echoes"
 
         {/* Event Details */}
         <View style={styles.detailsSection}>
+          <RenderHtml
+            contentWidth={screenWidth}
+            source={{ html: eventDetails?.description }}
+          />
+        </View>
+        {/* <View style={styles.detailsSection}>
           <View style={styles.detailItem}>
             <Calendar size={20} color="#48732C" />
             <Text style={styles.detailLabel}>Date:</Text>
@@ -116,10 +140,10 @@ Bhutan Echoes"
             <Text style={styles.detailLabel}>Participants:</Text>
             <Text style={styles.detailValue}>{eventDetails.participants}</Text>
           </View>
-        </View>
+        </View> */}
 
         {/* Event Description */}
-        <View style={styles.contentSection}>
+        {/* <View style={styles.contentSection}>
           <Text style={styles.descriptionText}>{eventDetails.description}</Text>
 
           <Text style={styles.sectionTitle}>Highlights of the Event:</Text>
@@ -131,7 +155,7 @@ Bhutan Echoes"
           ))}
 
           <Text style={styles.conclusionText}>{eventDetails.conclusion}</Text>
-        </View>
+        </View> */}
 
         {/* Bottom Spacing */}
         <View style={styles.bottomSpacing} />

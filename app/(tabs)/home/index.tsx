@@ -251,7 +251,7 @@ export default function HomeScreen() {
   );
 
   const handleSeeMoreEvents = () => {
-    // router.push("/(tabs)/home/events");
+    router.push("/(tabs)/home/normalEvents");
   };
 
   return (

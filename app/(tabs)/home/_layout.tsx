@@ -7,6 +7,7 @@ export default function HomeStack() {
       <Stack.Screen name="liveEvents" />
       <Stack.Screen name="eventDetails" />
       <Stack.Screen name="otherEventDetails" />
+      <Stack.Screen name="normalEvents" />
     </Stack>
   );
 }

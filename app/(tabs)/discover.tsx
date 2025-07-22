@@ -16,6 +16,7 @@ import {
   Bell,
   Download,
   Play,
+  Pause,
   FileText,
   Volume2,
 } from "lucide-react-native";
@@ -37,6 +38,13 @@ import {
 } from "react-native-permissions";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import RNFetchBlob from "rn-fetch-blob";
+import { Audio } from "expo-av";
+import ViewPdf from "@/components/modals/viewPdf";
+import {
+  downloadFile,
+  downloadFileWithRNFS,
+  downloadFileSimple,
+} from "../../helpers/downloadUtils";
 
 interface Resource {
   id: string;
@@ -57,6 +65,37 @@ export default function ResourcesScreen() {
   >("All");
   const [resources, setResources] = useState([]);
   const [hasPermission, setHasPermission] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [sound, setSound] = useState<Audio.Sound | null>(null);
+  const [playButtonId, setPlayButtonId] = useState(0);
+  const [pdfButtonId, setpdfButtonId] = useState(0);
+  const [viewPdf, setViewPdf] = useState(false);
+  const [pdfUrl, setPdfUrl] = useState(null);
+
+  const [downloadingItems, setDownloadingItems] = useState(new Map());
+  const [downloadProgress, setDownloadProgress] = useState(new Map());
+  const [fileSizes, setFileSizes] = useState(new Map());
+
+  const files = [
+    {
+      id: "1",
+      name: "Sample Audio.mp3",
+      url: "https://www.soundjay.com/misc/sounds/bell-ringing-05.wav",
+      type: "audio",
+    },
+    {
+      id: "2",
+      name: "Sample Document.pdf",
+      url: "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+      type: "pdf",
+    },
+    {
+      id: "3",
+      name: "Another Audio.mp3",
+      url: "https://file-examples.com/storage/fe68c1d56d306b0f5c0bc45/2017/11/file_example_MP3_700KB.mp3",
+      type: "audio",
+    },
+  ];
 
   const filteredResources = resources.filter((resource) => {
     const matchesSearch =
@@ -254,105 +293,105 @@ export default function ResourcesScreen() {
   //   checkStoragePermission();
   // }, []);
 
-  const downloadFile = async (fileUrl: string, fileName: string) => {
-    // requestStoragePermission();
-    // const canDownload = await checkStoragePermission();
-    // if (!canDownload) {
-    //   Alert.alert("Permission denied");
-    //   return;
-    // }
-    try {
-      // if (Platform.OS === "android") {
-      //   const hasPermission = await requestStoragePermission();
-      //   console.log("hasPermission", hasPermission);
+  // const downloadFile = async (fileUrl: string, fileName: string) => {
+  //   // requestStoragePermission();
+  //   // const canDownload = await checkStoragePermission();
+  //   // if (!canDownload) {
+  //   //   Alert.alert("Permission denied");
+  //   //   return;
+  //   // }
+  //   try {
+  //     // if (Platform.OS === "android") {
+  //     //   const hasPermission = await requestStoragePermission();
+  //     //   console.log("hasPermission", hasPermission);
 
-      //   if (!hasPermission) {
-      //     Alert.alert(
-      //       "Permission denied",
-      //       "Cannot download without permission."
-      //     );
-      //     return;
-      //   }
-      // }
+  //     //   if (!hasPermission) {
+  //     //     Alert.alert(
+  //     //       "Permission denied",
+  //     //       "Cannot download without permission."
+  //     //     );
+  //     //     return;
+  //     //   }
+  //     // }
 
-      const path = await getDownloadPath(fileName);
-      const token = await AsyncStorage.getItem("token");
-      const options = {
-        fromUrl: fileUrl,
-        toFile: `${path}/file.pdf`,
-        headers: {
-          Authorization: `Bearer ${token}`, // or custom header key
-        },
-      };
-      console.log("options", options);
+  //     const path = await getDownloadPath(fileName);
+  //     const token = await AsyncStorage.getItem("token");
+  //     const options = {
+  //       fromUrl: fileUrl,
+  //       toFile: `${path}/file.pdf`,
+  //       headers: {
+  //         Authorization: `Bearer ${token}`, // or custom header key
+  //       },
+  //     };
+  //     console.log("options", options);
 
-      const download = RNFS.downloadFile(options);
-      console.log("Download Result:", download);
+  //     const download = RNFS.downloadFile(options);
+  //     console.log("Download Result:", download);
 
-      const { statusCode } = await download.promise;
+  //     const { statusCode } = await download.promise;
 
-      if (statusCode === 200) {
-        Alert.alert("✅ Download Complete", "File saved successfully!");
+  //     if (statusCode === 200) {
+  //       Alert.alert("✅ Download Complete", "File saved successfully!");
 
-        if (Platform.OS === "ios") {
-          await Share.open({
-            url: `file://${path}`,
-            title: "Share File",
-          });
-        }
-      } else {
-        Alert.alert("❌ Download Failed", `Status code: ${statusCode}`);
-      }
+  //       if (Platform.OS === "ios") {
+  //         await Share.open({
+  //           url: `file://${path}`,
+  //           title: "Share File",
+  //         });
+  //       }
+  //     } else {
+  //       Alert.alert("❌ Download Failed", `Status code: ${statusCode}`);
+  //     }
 
-      // const downloadPath =
-      //   Platform.OS === "android"
-      //     ? `${RNFS.DownloadDirectoryPath}/${fileName}`
-      //     : `${RNFS.DocumentDirectoryPath}/${fileName}`; // iOS sandbox
+  //     // const downloadPath =
+  //     //   Platform.OS === "android"
+  //     //     ? `${RNFS.DownloadDirectoryPath}/${fileName}`
+  //     //     : `${RNFS.DocumentDirectoryPath}/${fileName}`; // iOS sandbox
 
-      // const options = {
-      //   fromUrl: fileUrl,
-      //   toFile: downloadPath,
-      //   background: true,
-      //   discretionary: true,
-      // };
-      // try {
-      //   if (Platform.OS === "ios") {
-      //     shareFileiOS(downloadPath);
-      //   }
-      //   const res = await RNFS.downloadFile(options).promise;
-      //   if (res.statusCode === 200) {
-      //     Alert.alert(
-      //       "Download complete",
-      //       `File saved to ${
-      //         Platform.OS === "android"
-      //           ? "Downloads folder"
-      //           : "Files > App folder"
-      //       }`
-      //     );
-      //   } else {
-      //     Alert.alert("Download failed", `Status code: ${res.statusCode}`);
-      //   }
+  //     // const options = {
+  //     //   fromUrl: fileUrl,
+  //     //   toFile: downloadPath,
+  //     //   background: true,
+  //     //   discretionary: true,
+  //     // };
+  //     // try {
+  //     //   if (Platform.OS === "ios") {
+  //     //     shareFileiOS(downloadPath);
+  //     //   }
+  //     //   const res = await RNFS.downloadFile(options).promise;
+  //     //   if (res.statusCode === 200) {
+  //     //     Alert.alert(
+  //     //       "Download complete",
+  //     //       `File saved to ${
+  //     //         Platform.OS === "android"
+  //     //           ? "Downloads folder"
+  //     //           : "Files > App folder"
+  //     //       }`
+  //     //     );
+  //     //   } else {
+  //     //     Alert.alert("Download failed", `Status code: ${res.statusCode}`);
+  //     //   }
 
-      console.log("✅ File downloaded to:", path);
-      Toast.show({
-        type: "success",
-        text1: "Download successful.",
-      });
-    } catch (error) {
-      console.error("❌ Download error:", error);
-      Toast.show({
-        type: "error",
-        text1: "Download failed.",
-      });
-    }
-  };
+  //     console.log("✅ File downloaded to:", path);
+  //     Toast.show({
+  //       type: "success",
+  //       text1: "Download successful.",
+  //     });
+  //   } catch (error) {
+  //     console.error("❌ Download error:", error);
+  //     Toast.show({
+  //       type: "error",
+  //       text1: "Download failed.",
+  //     });
+  //   }
+  // };
 
   const handleDownload = (resource: Resource) => {
     Alert.alert("Download", `Download ${resource.title}?`, [
       { text: "Cancel", style: "cancel" },
       {
         text: "Download",
-        onPress: () => {
+        onPress: async () => {
           const url =
             resource?.type === "ebook"
               ? resource?.file_path
@@ -363,17 +402,101 @@ export default function ResourcesScreen() {
 
           // downloadFile(url, name);
           // getPermission(url, name);
-          checkPermission(url, name);
+          // checkPermission(url, name);
+
+          const itemId = resource.id;
+
+          // Prevent multiple downloads
+          if (downloadingItems.has(itemId)) {
+            Alert.alert(
+              "Already Downloading",
+              "This file is already being downloaded"
+            );
+            return;
+          }
+
+          // Check storage space
+          // const storageInfo = await checkStorageSpace();
+          // console.log("storageInfo", storageInfo);
+          // if (!storageInfo.hasEnoughSpace) {
+          //   Alert.alert(
+          //     "Insufficient Storage",
+          //     "You may not have enough storage space. Continue anyway?",
+          //     [
+          //       { text: "Cancel", style: "cancel" },
+          //       {
+          //         text: "Continue",
+          //         onPress: () => startDownload(itemId, url, name),
+          //       },
+          //     ]
+          //   );
+          //   return;
+          // }
+
+          startDownload(
+            itemId,
+            "https://www.irs.gov/pub/irs-pdf/f1040.pdf",
+            "f1040.pdf"
+          );
         },
       },
     ]);
   };
 
+  const startDownload = async (itemId, url, name) => {
+    console.log("startDownload called");
+
+    // Set downloading state
+    setDownloadingItems((prev) => new Map(prev.set(itemId, true)));
+    setDownloadProgress((prev) => new Map(prev.set(itemId, 0)));
+
+    // Progress callback
+    const onProgress = (progress) => {
+      setDownloadProgress((prev) => new Map(prev.set(itemId, progress)));
+    };
+
+    try {
+      // Try primary method first
+      let success = await downloadFile(url, name, onProgress);
+
+      // If primary method fails, try RNFS method
+      if (!success) {
+        success = await downloadFileWithRNFS(url, name, onProgress);
+      }
+
+      // If both fail, try simple browser download
+      if (!success) {
+        success = await downloadFileSimple(url, name);
+      }
+
+      if (success) {
+        Alert.alert("Success", `${name} download initiated successfully!`);
+      }
+    } catch (error) {
+      Alert.alert("Download Failed", error.message);
+    } finally {
+      // Clean up states
+      setDownloadingItems((prev) => {
+        const newMap = new Map(prev);
+        newMap.delete(itemId);
+        return newMap;
+      });
+      setDownloadProgress((prev) => {
+        const newMap = new Map(prev);
+        newMap.delete(itemId);
+        return newMap;
+      });
+    }
+  };
+
   const handleView = (resource: Resource) => {
-    if (resource.type === "PDF") {
-      Alert.alert("View PDF", `Opening ${resource.title}...`);
+    if (resource.type === "ebook") {
+      setpdfButtonId(resource.id);
+      setPdfUrl(resource.file_path);
+      setViewPdf(true);
     } else {
-      Alert.alert("Play Audio", `Playing ${resource.title}...`);
+      setPlayButtonId(resource.id);
+      playAudio(resource);
     }
   };
 
@@ -396,6 +519,8 @@ export default function ResourcesScreen() {
       >
         {resource.type === "ebook" ? (
           <Text style={styles.viewButtonText}>View</Text>
+        ) : isPlaying && playButtonId === resource.id ? (
+          <Pause size={16} color="white" />
         ) : (
           <Play size={16} color="white" />
         )}
@@ -411,6 +536,41 @@ export default function ResourcesScreen() {
       setResources(data?.media);
     } catch (error) {
       console.error("Error fetching media:", error);
+    }
+  };
+
+  const playAudio = async (resource: Resource) => {
+    try {
+      if (sound && isPlaying && playButtonId === resource.id) {
+        await sound.stopAsync();
+        await sound.unloadAsync();
+        setSound(null);
+        setIsPlaying(false);
+        return;
+      }
+
+      if (!sound) {
+        const { sound: newSound } = await Audio.Sound.createAsync({
+          uri: resource?.audio_url,
+        });
+        setSound(newSound);
+        await newSound.setVolumeAsync(1.0);
+
+        await newSound.playAsync();
+        setIsPlaying(true);
+
+        newSound.setOnPlaybackStatusUpdate((status) => {
+          if ((status as any).didJustFinish) {
+            setIsPlaying(false);
+            setSound(null);
+          }
+        });
+      } else {
+        await sound.playAsync();
+        setIsPlaying(true);
+      }
+    } catch (err) {
+      console.error("Playback error", err);
     }
   };
 
@@ -450,8 +610,8 @@ export default function ResourcesScreen() {
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
       >
-        {filteredResources.map((resource) => (
-          <View key={resource?.id} style={styles.resourceItem}>
+        {filteredResources.map((resource, index) => (
+          <View key={resource?.title + index} style={styles.resourceItem}>
             <View style={styles.resourceContent}>
               <View style={styles.resourceIcon}>
                 {getResourceIcon(resource?.type)}
@@ -498,6 +658,11 @@ export default function ResourcesScreen() {
         showFilterModal={showFilterModal}
         setShowFilterModal={setShowFilterModal}
         setSelectedFilter={setSelectedFilter}
+      />
+      <ViewPdf
+        url={pdfUrl}
+        showPostModal={viewPdf}
+        setShowPostModal={setViewPdf}
       />
     </View>
   );

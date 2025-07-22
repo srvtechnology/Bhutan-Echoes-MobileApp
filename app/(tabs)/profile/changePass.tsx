@@ -31,6 +31,13 @@ export default function EditProfile() {
       });
       return;
     }
+    if (newPassword !== confirmPassword) {
+      Toast.show({
+        type: "error",
+        text1: "Password does not match",
+      });
+      return;
+    }
     try {
       const token = await AsyncStorage.getItem("token");
       const { data } = await axios.put(
