@@ -14,41 +14,53 @@ import { router } from "expo-router";
 
 const Header = ({ title, back = true }: { title: string; back?: boolean }) => {
   return (
-    <View style={styles.header}>
-      <View style={styles.headerLeft}>
-        {Platform.OS === "ios" && back && (
-          <TouchableOpacity onPress={() => router.back()}>
-            <MoveLeft size={24} color={"#fff"} />
-          </TouchableOpacity>
-        )}
-        <Text style={styles.headerTitle}>{title}</Text>
-      </View>
-      <View style={styles.headerRight}>
-        <TouchableOpacity
-          style={styles.notificationButton}
-          onPress={() => router.push("/notification")}
-        >
-          <Bell size={24} color={"#fff"} />
-          <View style={styles.notificationBadge}>
-            <Text style={styles.notificationBadgeText}>3</Text>
+    <>
+      <StatusBar
+        translucent
+        backgroundColor="transparent"
+        barStyle="light-content"
+      />
+      <View style={styles.headerWrapper}>
+        <View style={styles.header}>
+          <View style={styles.headerLeft}>
+            {Platform.OS === "ios" && back && (
+              <TouchableOpacity onPress={() => router.back()}>
+                <MoveLeft size={24} color={"#fff"} />
+              </TouchableOpacity>
+            )}
+            <Text style={styles.headerTitle}>{title}</Text>
           </View>
-        </TouchableOpacity>
+          <View style={styles.headerRight}>
+            <TouchableOpacity
+              style={styles.notificationButton}
+              onPress={() => router.push("/notification")}
+            >
+              <Bell size={24} color={"#fff"} />
+              <View style={styles.notificationBadge}>
+                <Text style={styles.notificationBadgeText}>3</Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
-    </View>
+    </>
   );
 };
 
 const styles = StyleSheet.create({
+  headerWrapper: {
+    backgroundColor: "#48732C",
+    paddingTop: Platform.OS === "android" ? StatusBar.currentHeight : 0,
+    borderBottomLeftRadius: 40,
+    borderBottomRightRadius: 40,
+    overflow: "hidden",
+  },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 20,
     paddingVertical: 20,
-    backgroundColor: "#48732C",
-    borderBottomLeftRadius: 40,
-    borderBottomRightRadius: 40,
-    marginBottom: 20,
   },
   headerLeft: {
     flex: 1,

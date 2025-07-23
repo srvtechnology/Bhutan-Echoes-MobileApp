@@ -7,39 +7,32 @@ import {
   Alert,
   FlatList,
 } from "react-native";
-import QuizResult from "./modals/quizResult";
 import Toast from "react-native-toast-message";
 import { baseUrl } from "@/config";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-interface QuizQuestion {
-  id: string;
-  question: string;
-  options: string[];
-  correctAnswer: number;
-}
-
 interface QuizSectionProps {
-  questions: QuizQuestion[];
-  onQuizComplete?: (score: any) => void;
+  question: any[];
+  qusNo: string;
 }
 
 export default function QuizSectionMajesty({
-  questions,
-  onQuizComplete,
+  question,
+  qusNo,
 }: QuizSectionProps) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [isBtnDisabled, setIsBtnDisabled] = useState(false);
   const [selectedAnswers, setSelectedAnswers] = useState<{
     [key: string]: number;
   }>({});
-  const currentQuestion = questions[currentQuestionIndex];
+  const [result, setResult] = useState(false);
+  const [isCorrectAnswer, setIsCorrectAnswer] = useState(false);
 
   const handleAnswerSelect = (optionIndex: number) => {
     setSelectedAnswers((prev) => ({
       ...prev,
-      [currentQuestion.id]: optionIndex,
+      [question.id]: optionIndex,
     }));
   };
   const submitAnswer = async (
@@ -73,11 +66,11 @@ export default function QuizSectionMajesty({
         type: "success",
         text1: data.message,
       });
-      onQuizComplete?.({
-        total: questions.length,
-        correct: data.user_right,
-        wrong: data.user_wrong,
-      });
+      // onQuizComplete?.({
+      //   total: questions.length,
+      //   correct: data.user_right,
+      //   wrong: data.user_wrong,
+      // });
     } catch (error) {
       console.log("submit answer error", error);
 
@@ -89,7 +82,7 @@ export default function QuizSectionMajesty({
     }
   };
   const handleSubmit = () => {
-    if (selectedAnswers[currentQuestion.id] === undefined) {
+    if (selectedAnswers[question.id] === undefined) {
       Alert.alert(
         "Please select an answer",
         "You must select an answer before submitting."
@@ -97,82 +90,78 @@ export default function QuizSectionMajesty({
       return;
     }
 
-    if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex((prev) => prev + 1);
-    } else {
-      // submitAnswer()
-      // Calculate score
-      const score = questions.reduce((acc, question) => {
-        const userAnswer = selectedAnswers[question.id];
-        return {
-          liveQuizId: question.live_quiz_id,
-          questionId: question.id,
-          answerId: question.answers[userAnswer].id,
-        };
-        // return acc + (question.answers[userAnswer].is_correct ? 1 : 0);
-      }, 0);
-      console.log("score", score);
-      submitAnswer(score.liveQuizId, score.questionId, score.answerId);
-
-      // setIsBtnDisabled(true);
-    }
+    setIsCorrectAnswer(
+      selectedAnswers[question?.id] == question?.correct_answer
+    );
+    setIsBtnDisabled(true);
+    setResult(true);
   };
 
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        result && !isCorrectAnswer && styles.redBorder,
+        result && isCorrectAnswer && styles.greenBrorder,
+      ]}
+    >
       <View style={styles.questionHeader}>
         <Text style={styles.questionNumber}>
-          Quiz {currentQuestionIndex + 1}: {currentQuestion.question}
+          Quiz {qusNo}: {question.question}
         </Text>
       </View>
 
       <View style={styles.optionsContainer}>
-        {currentQuestion.answers.map((option, index) => (
+        {question.options.map((option, index) => (
           <TouchableOpacity
             disabled={isBtnDisabled}
             key={index}
             style={[
               styles.optionButton,
-              selectedAnswers[currentQuestion.id] === index &&
-                !isBtnDisabled &&
-                styles.selectedOption,
+              selectedAnswers[question.id] === index && styles.selectedOption,
             ]}
             onPress={() => handleAnswerSelect(index)}
           >
             <Text
               style={[
                 styles.optionText,
-                selectedAnswers[currentQuestion.id] === index &&
-                  !isBtnDisabled &&
+                selectedAnswers[question.id] === index &&
                   styles.selectedOptionText,
               ]}
             >
-              {option.answer}
+              {option}
             </Text>
           </TouchableOpacity>
         ))}
       </View>
 
-      <TouchableOpacity
-        disabled={isBtnDisabled}
-        style={[
-          styles.submitButton,
-          selectedAnswers[currentQuestion.id] !== undefined &&
-            !isBtnDisabled &&
-            styles.submitButtonActive,
-        ]}
-        onPress={handleSubmit}
-      >
-        <Text
+      <View style={styles.resultContainer}>
+        <TouchableOpacity
+          disabled={selectedAnswers[question.id] === undefined || isBtnDisabled}
           style={[
-            styles.submitButtonText,
-            selectedAnswers[currentQuestion.id] !== undefined &&
-              styles.submitButtonTextActive,
+            styles.submitButton,
+            selectedAnswers[question.id] !== undefined &&
+              !isBtnDisabled &&
+              styles.submitButtonActive,
           ]}
+          onPress={handleSubmit}
         >
-          {currentQuestionIndex < questions.length - 1 ? "Next" : "Submit"}
-        </Text>
-      </TouchableOpacity>
+          <Text
+            style={[
+              styles.submitButtonText,
+              selectedAnswers[question.id] !== undefined &&
+                styles.submitButtonTextActive,
+            ]}
+          >
+            Submit
+          </Text>
+        </TouchableOpacity>
+        {result && (
+          <Text style={styles.correctAnswerText}>
+            Correct Answer: {question.options[question.correct_answer]}
+          </Text>
+        )}
+      </View>
     </View>
   );
 }
@@ -208,19 +197,31 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     marginBottom: 10,
     width: "48%",
-    height: 30,
     textAlign: "center",
     justifyContent: "center",
     alignItems: "center",
+    paddingHorizontal: 4,
+    paddingVertical: 3,
   },
   selectedOption: {
     backgroundColor: "#48732C",
   },
+  correctOption: {
+    backgroundColor: "#a90000ff",
+  },
   optionText: {
-    fontSize: 15,
+    fontSize: 14,
     color: "#000",
     textAlign: "center",
     fontFamily: "inter",
+  },
+  redBorder: {
+    borderWidth: 2,
+    borderColor: "#d40101ff",
+  },
+  greenBrorder: {
+    borderWidth: 2,
+    borderColor: "#48732C",
   },
   selectedOptionText: {
     color: "#fff",
@@ -266,5 +267,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "white",
     fontWeight: "600",
+  },
+  resultContainer: {},
+  correctAnswerText: {
+    fontSize: 16,
+    color: "#48732C",
+    fontFamily: "interBold",
+    marginTop: 10,
   },
 });

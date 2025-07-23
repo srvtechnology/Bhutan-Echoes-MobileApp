@@ -1,5 +1,5 @@
-import { Tabs } from 'expo-router';
-import {Image, View } from 'react-native'
+import { Tabs } from "expo-router";
+import { Image, View } from "react-native";
 
 export default function TabLayout() {
   return (
@@ -7,10 +7,10 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: '#EFEEEE',
+          backgroundColor: "#EFEEEE",
           borderTopWidth: 0,
           elevation: 8,
-          shadowColor: '#000',
+          shadowColor: "#000",
           shadowOffset: { width: 0, height: -2 },
           shadowOpacity: 0.1,
           shadowRadius: 8,
@@ -18,67 +18,35 @@ export default function TabLayout() {
           paddingBottom: 20,
           paddingTop: 10,
         },
-        tabBarActiveTintColor: '#48732C',
-        tabBarInactiveTintColor: '#8E8E93',
+        tabBarActiveTintColor: "#48732C",
+        tabBarInactiveTintColor: "#8E8E93",
         tabBarShowLabel: false,
-        tabBarIconStyle: {height: 40}
+        tabBarIconStyle: { height: 40 },
       }}
     >
       <Tabs.Screen
         name="home"
         options={{
-          tabBarIcon: ({ size, color,focused }) => 
-           <View
-              style={{
-                width: 50,
-                height: 50,
-                borderRadius: 25,
-                backgroundColor: focused ? '#e0e0e0' : 'transparent',
-                justifyContent: 'center',
-                alignItems: 'center',
-              }}
-            >
-              {focused ? (
-                <Image
-                  source={require('../../assets/icons/home.png')}
-                  resizeMode="contain"
-                  style={{ width: size, height: size }}
-                />
-              ) : (
-               <Image
-                  source={require('../../assets/icons/home.png')}
-                  resizeMode="contain"
-                  style={{ width: size, height: size }}
-                />
-              )}
-            </View>
-          
-        }}
-      />
-      <Tabs.Screen
-        name="featured"
-        options={{
-          title: 'Featured',
           tabBarIcon: ({ size, color, focused }) => (
-             <View
+            <View
               style={{
                 width: 50,
                 height: 50,
                 borderRadius: 25,
-                backgroundColor: focused ? '#e0e0e0' : 'transparent',
-                justifyContent: 'center',
-                alignItems: 'center',
+                backgroundColor: focused ? "#e0e0e0" : "transparent",
+                justifyContent: "center",
+                alignItems: "center",
               }}
             >
               {focused ? (
                 <Image
-                  source={require('../../assets/icons/majesty.png')}
+                  source={require("../../assets/icons/home.png")}
                   resizeMode="contain"
                   style={{ width: size, height: size }}
                 />
               ) : (
-               <Image
-                  source={require('../../assets/icons/majesty.png')}
+                <Image
+                  source={require("../../assets/icons/home.png")}
                   resizeMode="contain"
                   style={{ width: size, height: size }}
                 />
@@ -88,29 +56,61 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="discover"
+        name="majesty"
         options={{
-          title: 'Discover',
+          title: "Featured",
           tabBarIcon: ({ size, color, focused }) => (
             <View
               style={{
                 width: 50,
                 height: 50,
                 borderRadius: 25,
-                backgroundColor: focused ? '#e0e0e0' : 'transparent',
-                justifyContent: 'center',
-                alignItems: 'center',
+                backgroundColor: focused ? "#e0e0e0" : "transparent",
+                justifyContent: "center",
+                alignItems: "center",
               }}
             >
               {focused ? (
                 <Image
-                  source={require('../../assets/icons/feed.png')}
+                  source={require("../../assets/icons/majesty.png")}
                   resizeMode="contain"
                   style={{ width: size, height: size }}
                 />
               ) : (
-               <Image
-                  source={require('../../assets/icons/feed.png')}
+                <Image
+                  source={require("../../assets/icons/majesty.png")}
+                  resizeMode="contain"
+                  style={{ width: size, height: size }}
+                />
+              )}
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="resources"
+        options={{
+          title: "Discover",
+          tabBarIcon: ({ size, color, focused }) => (
+            <View
+              style={{
+                width: 50,
+                height: 50,
+                borderRadius: 25,
+                backgroundColor: focused ? "#e0e0e0" : "transparent",
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              {focused ? (
+                <Image
+                  source={require("../../assets/icons/feed.png")}
+                  resizeMode="contain"
+                  style={{ width: size, height: size }}
+                />
+              ) : (
+                <Image
+                  source={require("../../assets/icons/feed.png")}
                   resizeMode="contain"
                   style={{ width: size, height: size }}
                 />
@@ -122,27 +122,27 @@ export default function TabLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
+          title: "Profile",
           tabBarIcon: ({ size, color, focused }) => (
-             <View
+            <View
               style={{
                 width: 50,
                 height: 50,
                 borderRadius: 25,
-                backgroundColor: focused ? '#e0e0e0' : 'transparent',
-                justifyContent: 'center',
-                alignItems: 'center',
+                backgroundColor: focused ? "#e0e0e0" : "transparent",
+                justifyContent: "center",
+                alignItems: "center",
               }}
             >
               {focused ? (
                 <Image
-                  source={require('../../assets/icons/profile.png')}
+                  source={require("../../assets/icons/profile.png")}
                   resizeMode="contain"
                   style={{ width: size, height: size }}
                 />
               ) : (
-               <Image
-                  source={require('../../assets/icons/profile.png')}
+                <Image
+                  source={require("../../assets/icons/profile.png")}
                   resizeMode="contain"
                   style={{ width: size, height: size }}
                 />

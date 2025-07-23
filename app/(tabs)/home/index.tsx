@@ -256,13 +256,12 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
+      {/* Header */}
+      <Header title="Bhutan Echoes" back={false} />
       {/* User Post */}
       <FlatList
         ListHeaderComponent={
           <>
-            {/* Header */}
-            <Header title="Bhutan Echoes" back={false} />
-
             {/* Featured Event Card */}
             <View style={styles.featuredCard}>
               <Carousel
@@ -423,6 +422,7 @@ const styles = StyleSheet.create({
   featuredCard: {
     alignItems: "center",
     marginBottom: 20,
+    paddingTop: 20,
   },
   featuredBackground: {
     flex: 1,

@@ -9,19 +9,12 @@ import {
   Dimensions,
   Alert,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import {
-  Bell,
-  Play,
-  ChevronLeft,
-  ChevronRight,
-  UserCircle2,
-} from "lucide-react-native";
+import { Play, UserCircle2 } from "lucide-react-native";
 import Header from "@/components/header";
 import { Video } from "expo-av";
-import QuizSectionMajesty from "@/components/QuizSectionMajesty";
 import axios from "axios";
 import { baseUrl } from "@/config";
+import { router } from "expo-router";
 
 const { width: screenWidth } = Dimensions.get("window");
 
@@ -33,13 +26,6 @@ interface QuizQuestion {
 }
 
 export default function MajestyTimelineScreen() {
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
-  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
-  const [quizes, setQuizes] = useState([]);
-  const [quizScore, setQuizScore] = useState<any>({});
-  const [showQuizResultModal, setShowQuizResultModal] = useState(false);
-  const [isQuizLoading, setIsQuizLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   const handleImageScroll = (event: any) => {
@@ -47,27 +33,6 @@ export default function MajestyTimelineScreen() {
     const imageIndex = Math.round(contentOffset.x / screenWidth);
     setCurrentImageIndex(imageIndex);
   };
-
-  const quizQuestions: QuizQuestion[] = [
-    {
-      id: "q1",
-      question: "How old is this festival?",
-      options: ["1 Year", "5 Years", "10 Years", "12 years"],
-      correctAnswer: 2,
-    },
-    {
-      id: "q2",
-      question: "When was His Majesty born?",
-      options: ["1980", "1981", "1982", "1983"],
-      correctAnswer: 1,
-    },
-    {
-      id: "q3",
-      question: "What is the capital of Bhutan?",
-      options: ["Thimphu", "Paro", "Punakha", "Jakar"],
-      correctAnswer: 0,
-    },
-  ];
 
   const audioResources = [
     {
@@ -92,69 +57,8 @@ export default function MajestyTimelineScreen() {
     "https://images.pexels.com/photos/6823568/pexels-photo-6823568.jpeg",
   ];
 
-  const royalPhotos = [
-    "https://images.pexels.com/photos/8728380/pexels-photo-8728380.jpeg",
-    "https://images.pexels.com/photos/6823568/pexels-photo-6823568.jpeg",
-    "https://images.pexels.com/photos/1181673/pexels-photo-1181673.jpeg",
-    "https://images.pexels.com/photos/339620/pexels-photo-339620.jpeg",
-  ];
-
-  const currentQuestion = quizQuestions[currentQuestionIndex];
-
-  const fetchQuizes = async () => {
-    setIsQuizLoading(true);
-    try {
-      const { data } = await axios.get(baseUrl + "/live-quizzes");
-      console.log("Quizes", data.live_quizzes[0]);
-      setQuizes(data.live_quizzes[0]);
-      setIsQuizLoading(false);
-    } catch (error) {
-      console.log("Error fetching quizes:", error);
-      // setIsQuizLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchQuizes();
-  }, []);
-
-  const handleQuizComplete = (score: number) => {
-    setQuizScore(score);
-    setShowQuizResultModal(true);
-  };
-
-  const handleAnswerSelect = (optionIndex: number) => {
-    setSelectedAnswer(optionIndex);
-  };
-
-  const handleNext = () => {
-    if (selectedAnswer === null) {
-      Alert.alert(
-        "Please select an answer",
-        "You must select an answer before proceeding."
-      );
-      return;
-    }
-
-    if (currentQuestionIndex < quizQuestions.length - 1) {
-      setCurrentQuestionIndex((prev) => prev + 1);
-      setSelectedAnswer(null);
-    } else {
-      Alert.alert("Quiz Complete!", "Thank you for participating in the quiz.");
-      // Reset quiz
-      setCurrentQuestionIndex(0);
-      setSelectedAnswer(null);
-    }
-  };
-
   const handlePlayAudio = (resource: any) => {
     Alert.alert("Play Audio", `Playing: ${resource.title}`);
-  };
-
-  const handlePhotoScroll = (event: any) => {
-    const contentOffset = event.nativeEvent.contentOffset;
-    const photoIndex = Math.round(contentOffset.x / (screenWidth - 40));
-    setCurrentPhotoIndex(photoIndex);
   };
 
   return (
@@ -165,10 +69,17 @@ export default function MajestyTimelineScreen() {
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
       >
+        {/* Quiz Button */}
+        <TouchableOpacity
+          style={styles.quizButton}
+          onPress={() => router.push("/(tabs)/majesty/quizes")}
+        >
+          <Text style={styles.quizButtonText}>Majesty Quizes</Text>
+        </TouchableOpacity>
         {/* Royal Information */}
         <View style={styles.royalInfoSection}>
           <View style={styles.organizationSection}>
-            <UserCircle2 size={25} color={"purple"} />
+            <UserCircle2 size={20} color={"purple"} />
             <Text style={styles.organizationName}>Bhutan Echoes</Text>
           </View>
           <Text style={styles.royalDescription}>
@@ -193,49 +104,53 @@ export default function MajestyTimelineScreen() {
         </View>
 
         {/* Quiz Section */}
-        {!isQuizLoading && (
+        {/* {!isQuizLoading && (
           <QuizSectionMajesty
             questions={quizes?.questions}
             onQuizComplete={handleQuizComplete}
           />
-        )}
+        )} */}
 
         {/* Audio Resources */}
         <View style={styles.audioSection}>
           {audioResources.map((resource) => (
-            <TouchableOpacity
-              key={resource.id}
-              style={styles.audioItem}
-              onPress={() => handlePlayAudio(resource)}
-            >
-              <View style={styles.audioIcon}>
-                <Play size={24} color="white" />
-              </View>
-              <View style={styles.audioInfo}>
-                <Text style={styles.audioTitle}>{resource.title}</Text>
-                <Text style={styles.audioDescription}>
-                  {resource.description}
-                </Text>
-                {/* {resource.duration && (
+            <View style={styles.audioContainer}>
+              <TouchableOpacity
+                key={resource.id}
+                style={styles.audioItem}
+                onPress={() => handlePlayAudio(resource)}
+              >
+                <View style={styles.audioIcon}>
+                  <Play size={24} color="white" />
+                </View>
+                <View style={styles.audioInfo}>
+                  <Text style={styles.audioTitle}>{resource.title}</Text>
+                  <Text style={styles.audioDescription}>
+                    {resource.description}
+                  </Text>
+                  {/* {resource.duration && (
                   <Text style={styles.audioDuration}>
                     Duration: {resource.duration}
                   </Text>
                 )} */}
-              </View>
-            </TouchableOpacity>
+                </View>
+              </TouchableOpacity>
+            </View>
           ))}
         </View>
 
         {/* Message from His Majesty */}
-        <View style={styles.messageSection}>
-          <Text style={styles.messageTitle}>Message from His Majesty</Text>
-          <Text style={styles.messageContent}>
-            His Majesty King Jigme Khesar Namgyel Wangchuck is the fifth king of
-            Bhutan. Known for his humble personality, his approachability and
-            his popularity, he is lovingly called the People's King in the
-            country. Very few people know that is Majesty was born in Kathmandu,
-            Nepal.
-          </Text>
+        <View style={styles.messageSectionContainer}>
+          <View style={styles.messageSection}>
+            <Text style={styles.messageTitle}>Message from His Majesty</Text>
+            <Text style={styles.messageContent}>
+              His Majesty King Jigme Khesar Namgyel Wangchuck is the fifth king
+              of Bhutan. Known for his humble personality, his approachability
+              and his popularity, he is lovingly called the People's King in the
+              country. Very few people know that is Majesty was born in
+              Kathmandu, Nepal.
+            </Text>
+          </View>
         </View>
 
         {/* Recent Photos */}
@@ -289,8 +204,22 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+    backgroundColor: "#fff",
   },
-
+  quizButton: {
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#48732C",
+    paddingVertical: 12,
+    borderRadius: 8,
+    marginHorizontal: 20,
+    marginTop: 10,
+  },
+  quizButtonText: {
+    color: "#fff",
+    fontSize: 14,
+    fontFamily: "interBold",
+  },
   royalInfoSection: {
     backgroundColor: "white",
     marginTop: 10,
@@ -304,7 +233,7 @@ const styles = StyleSheet.create({
   },
   organizationName: {
     fontSize: 12,
-    fontFamily: "interMedium",
+    fontFamily: "interBold",
     color: "#222",
     marginLeft: 5,
   },
@@ -317,28 +246,24 @@ const styles = StyleSheet.create({
     fontFamily: "interMedium",
     paddingVertical: 10,
   },
-  videoSection: {},
+  videoSection: {
+    borderBottomWidth: 1,
+    borderBottomColor: "#ddd",
+    paddingBottom: 10,
+  },
+
   postVideo: {
     width: "100%",
     height: 215,
   },
-  quizSection: {
-    backgroundColor: "#f5f5f5",
-    padding: 20,
-    marginTop: 10,
+  audioContainer: {
+    borderBottomWidth: 1,
+    borderBottomColor: "#ddd",
+    paddingBottom: 5,
+    marginTop: 5,
   },
-  quizTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 20,
-  },
-  quizOptions: {
-    marginBottom: 20,
-  },
-
   audioSection: {
-    paddingVertical: 10,
+    paddingBottom: 5,
     backgroundColor: "#F9F9F9",
   },
   audioItem: {
@@ -382,11 +307,17 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#999",
   },
+  messageSectionContainer: {
+    marginTop: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ddd",
+    paddingBottom: 10,
+  },
   messageSection: {
     backgroundColor: "#dddddd",
     padding: 20,
-    marginTop: 10,
   },
+
   messageTitle: {
     fontSize: 16,
     fontFamily: "interBold",

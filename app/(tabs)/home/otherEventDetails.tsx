@@ -171,6 +171,7 @@ const styles = StyleSheet.create({
   },
   scrollView: {
     flex: 1,
+    paddingTop: 20,
   },
   imageSection: {
     position: "relative",

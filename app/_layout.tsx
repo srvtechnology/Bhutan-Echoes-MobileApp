@@ -41,12 +41,12 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <View
+      {/* <View
         style={{
           height: 50,
           backgroundColor: "#48732C",
         }}
-      />
+      /> */}
       <StatusBar backgroundColor="#48732C" style="light" />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="splash" />
