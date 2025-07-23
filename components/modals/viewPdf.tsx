@@ -4,7 +4,8 @@ import { View, Text, StyleSheet, TouchableOpacity, Modal } from "react-native";
 import React, { useState } from "react";
 import { X } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import Pdf from "react-native-pdf";
+// import Pdf from "react-native-pdf";
+import { WebView } from "react-native-webview";
 
 interface Props {
   showPostModal: boolean;
@@ -34,7 +35,7 @@ const ViewPdf: React.FC<Props> = ({ showPostModal, setShowPostModal, url }) => {
         <View style={styles.centeredView}>
           <View style={styles.commentBox}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Post Your Loveeee</Text>
+              <Text style={styles.modalTitle}>View PDF</Text>
               <TouchableOpacity
                 style={styles.closeButton}
                 onPress={() => setShowPostModal(false)}
@@ -43,13 +44,12 @@ const ViewPdf: React.FC<Props> = ({ showPostModal, setShowPostModal, url }) => {
               </TouchableOpacity>
             </View>
             <View
-              style={
-                {
-                  // padding: 20,
-                }
-              }
+              style={{
+                // padding: 20,
+                height: "95%",
+              }}
             >
-              <Pdf
+              {/* <Pdf
                 trustAllCerts={false}
                 source={{
                   uri: url,
@@ -61,6 +61,12 @@ const ViewPdf: React.FC<Props> = ({ showPostModal, setShowPostModal, url }) => {
                 onLoadComplete={(numberOfPages, filePath) => {
                   console.log(`number of pages: ${numberOfPages}`);
                 }}
+              /> */}
+              <WebView
+                source={{
+                  uri: `https://docs.google.com/gview?embedded=true&url=${url}`,
+                }}
+                style={{ flex: 1 }}
               />
             </View>
           </View>

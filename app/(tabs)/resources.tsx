@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   TextInput,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import {
   Search,
@@ -22,11 +23,15 @@ import axios from "axios";
 import { baseUrl } from "@/config";
 import { Audio } from "expo-av";
 import ViewPdf from "@/components/modals/viewPdf";
+// import {
+//   downloadFile,
+//   downloadFileWithRNFS,
+//   downloadFileSimple,
+// } from "../../helpers/downloadUtils";
 import {
   downloadFile,
-  downloadFileWithRNFS,
-  downloadFileSimple,
-} from "../../helpers/downloadUtils";
+  downloadFileWithProgress,
+} from "../../helpers/downloadUtilsExpo";
 
 interface Resource {
   id: string;
@@ -52,6 +57,8 @@ export default function ResourcesScreen() {
   const [pdfButtonId, setpdfButtonId] = useState(0);
   const [viewPdf, setViewPdf] = useState(false);
   const [pdfUrl, setPdfUrl] = useState(null);
+  const [downloadingItems, setDownloadingItems] = useState(new Set());
+  const [downloadProgress, setDownloadProgress] = useState({});
 
   const filteredResources = resources.filter((resource) => {
     const matchesSearch =
@@ -75,11 +82,29 @@ export default function ResourcesScreen() {
           const name = url?.split("/").pop();
           const itemId = resource.id;
 
-          startDownload(
-            itemId,
-            "https://www.irs.gov/pub/irs-pdf/f1040.pdf",
-            "f1040.pdf"
-          );
+          if (downloadingItems.has(itemId)) return;
+
+          setDownloadingItems((prev) => new Set([...prev, itemId]));
+
+          try {
+            const success = await downloadFile(url, name);
+
+            if (success) {
+              console.log(`Successfully downloaded: ${name}`);
+            }
+          } finally {
+            setDownloadingItems((prev) => {
+              const newSet = new Set(prev);
+              newSet.delete(itemId);
+              return newSet;
+            });
+          }
+
+          // startDownload(
+          //   itemId,
+          //   "https://www.irs.gov/pub/irs-pdf/f1040.pdf",
+          //   "f1040.pdf"
+          // );
         },
       },
     ]);
@@ -177,6 +202,7 @@ export default function ResourcesScreen() {
 
   const playAudio = async (resource: Resource) => {
     try {
+      // If clicking on the same item while playing, toggle pause/stop
       if (sound && isPlaying && playButtonId === resource.id) {
         await sound.stopAsync();
         await sound.unloadAsync();
@@ -185,26 +211,31 @@ export default function ResourcesScreen() {
         return;
       }
 
-      if (!sound) {
-        const { sound: newSound } = await Audio.Sound.createAsync({
-          uri: resource?.audio_url,
-        });
-        setSound(newSound);
-        await newSound.setVolumeAsync(1.0);
-
-        await newSound.playAsync();
-        setIsPlaying(true);
-
-        newSound.setOnPlaybackStatusUpdate((status) => {
-          if ((status as any).didJustFinish) {
-            setIsPlaying(false);
-            setSound(null);
-          }
-        });
-      } else {
-        await sound.playAsync();
-        setIsPlaying(true);
+      // If another audio is playing, stop and unload it first
+      if (sound) {
+        await sound.stopAsync();
+        await sound.unloadAsync();
+        setSound(null);
+        setIsPlaying(false);
       }
+
+      const { sound: newSound } = await Audio.Sound.createAsync({
+        // uri:          resource?.audio_url
+        uri: "https://www.learningcontainer.com/wp-content/uploads/2020/02/Kalimba.mp3",
+      });
+
+      setSound(newSound);
+      setPlayButtonId(resource.id); // Update the ID immediately
+      await newSound.setVolumeAsync(1.0);
+      await newSound.playAsync();
+      setIsPlaying(true);
+
+      newSound.setOnPlaybackStatusUpdate((status) => {
+        if ((status as any).didJustFinish) {
+          setIsPlaying(false);
+          setSound(null);
+        }
+      });
     } catch (err) {
       console.error("Playback error", err);
     }
@@ -246,35 +277,42 @@ export default function ResourcesScreen() {
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
       >
-        {filteredResources.map((resource, index) => (
-          <View key={resource?.title + index} style={styles.resourceItem}>
-            <View style={styles.resourceContent}>
-              <View style={styles.resourceIcon}>
-                {getResourceIcon(resource?.type)}
-              </View>
-              <View style={styles.resourceInfo}>
-                <Text style={styles.resourceTitle}>{resource?.title}</Text>
+        {filteredResources.map((resource, index) => {
+          const isDownloading = downloadingItems.has(resource.id);
+          return (
+            <View key={resource?.title + index} style={styles.resourceItem}>
+              <View style={styles.resourceContent}>
+                <View style={styles.resourceIcon}>
+                  {getResourceIcon(resource?.type)}
+                </View>
+                <View style={styles.resourceInfo}>
+                  <Text style={styles.resourceTitle}>{resource?.title}</Text>
 
-                <Text style={styles.resourceDescription}>
-                  {resource?.author || ""}
-                </Text>
+                  <Text style={styles.resourceDescription}>
+                    {resource?.author || ""}
+                  </Text>
 
-                {/* {resource.size && (
+                  {/* {resource.size && (
                   <Text style={styles.resourceSize}>Size: {resource.size}</Text>
                 )} */}
+                </View>
+              </View>
+              <View style={styles.resourceActions}>
+                {getActionButton(resource)}
+                <TouchableOpacity
+                  style={styles.downloadButton}
+                  onPress={() => handleDownload(resource)}
+                >
+                  {isDownloading ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <Text style={styles.downloadButtonText}>Download</Text>
+                  )}
+                </TouchableOpacity>
               </View>
             </View>
-            <View style={styles.resourceActions}>
-              {getActionButton(resource)}
-              <TouchableOpacity
-                style={styles.downloadButton}
-                onPress={() => handleDownload(resource)}
-              >
-                <Text style={styles.downloadButtonText}>Download</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        ))}
+          );
+        })}
 
         {filteredResources.length === 0 && (
           <View style={styles.emptyState}>

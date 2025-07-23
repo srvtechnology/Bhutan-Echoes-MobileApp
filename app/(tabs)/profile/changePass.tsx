@@ -121,6 +121,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 20,
     top: 20,
+    zIndex: 50,
   },
   headerTitle: {
     fontSize: 21,

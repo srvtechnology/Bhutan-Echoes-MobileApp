@@ -11,18 +11,31 @@
     "android": {
       "package": "com.srv.bhutanechos",
       "versionCode": 1,
-      "permissions": [],
       "adaptiveIcon": {
         "foregroundImage": "./assets/playstore.png",
         "backgroundColor": "#FFFFFF"
-      }
+      },
+      "permissions": [
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE",
+        "READ_MEDIA_AUDIO",
+        "READ_MEDIA_VIDEO",
+        "READ_MEDIA_IMAGES",
+        "MANAGE_EXTERNAL_STORAGE"
+      ]
     },
     "androidStatusBar": {
       "backgroundColor": "#48732C"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.srv.bhutanechos"
+      "bundleIdentifier": "com.srv.bhutanechos",
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "This app needs access to photo library to save downloaded files.",
+        "NSPhotoLibraryAddUsageDescription": "This app needs access to photo library to save downloaded files.",
+        "NSMicrophoneUsageDescription": "This app needs access to microphone for audio ,features.",
+        "NSCameraUsageDescription": "This app needs access to camera for photo features."
+      }
     },
     "web": {
       "bundler": "metro",
@@ -38,6 +51,14 @@
         {
           "supportsBackgroundPlayback": true,
           "supportsPictureInPicture": true
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Allow $(PRODUCT_NAME) to access your photos to save downloaded files.",
+          "savePhotosPermission": "Allow $(PRODUCT_NAME) to save files to your photo library.",
+          "isAccessMediaLocationEnabled": true
         }
       ]
     ],

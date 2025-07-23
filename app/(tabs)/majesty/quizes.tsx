@@ -47,7 +47,7 @@ export default function Quizes() {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <Header back={false} title="Majesty Quizes" />
+      <Header back={true} title="Majesty Quizes" />
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}

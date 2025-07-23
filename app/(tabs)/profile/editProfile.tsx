@@ -67,7 +67,10 @@ export default function EditProfile() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         {Platform.OS === "ios" && (
-          <TouchableOpacity onPress={() => router.back()} style={styles.back}>
+          <TouchableOpacity
+            onPress={() => router.push("/(tabs)/profile")}
+            style={styles.back}
+          >
             <MoveLeft size={24} color={"#48732C"} />
           </TouchableOpacity>
         )}
@@ -113,6 +116,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 20,
     top: 20,
+    zIndex: 50,
   },
   headerTitle: {
     fontSize: 21,

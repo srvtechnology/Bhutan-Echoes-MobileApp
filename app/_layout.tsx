@@ -9,7 +9,7 @@ import {
   Inter_500Medium,
   Inter_700Bold,
 } from "@expo-google-fonts/inter";
-import { View, ActivityIndicator, SafeAreaView } from "react-native";
+import { View, ActivityIndicator, Platform } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 import { ToastRoot } from "@/components/ToastHelper";
@@ -41,12 +41,14 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      {/* <View
-        style={{
-          height: 50,
-          backgroundColor: "#48732C",
-        }}
-      /> */}
+      {Platform.OS === "ios" && (
+        <View
+          style={{
+            height: 46,
+            backgroundColor: "#48732C",
+          }}
+        />
+      )}
       <StatusBar backgroundColor="#48732C" style="light" />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="splash" />
