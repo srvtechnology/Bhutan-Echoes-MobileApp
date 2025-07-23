@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -30,6 +30,7 @@ import Toast from "react-native-toast-message";
 import { baseUrl } from "@/config";
 import axios from "axios";
 import { router } from "expo-router";
+import * as ImagePicker from "expo-image-picker";
 
 interface ProfileData {
   name: string;
@@ -48,6 +49,8 @@ export default function ProfileScreen() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [editData, setEditData] = useState<ProfileData>(profileData);
   const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
+  const [image, setImage] = useState(null);
 
   const handleDeleteAccount = async () => {
     try {
@@ -139,6 +142,22 @@ export default function ProfileScreen() {
     },
   ];
 
+  const fetchUser = async () => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      const { data } = await axios.get(baseUrl + "/profile", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      console.log("User", data);
+      setName(data.user.name);
+      setImage(data.user_image);
+    } catch (error) {
+      console.log("Error fetching user:", error);
+    }
+  };
+
   const handleSaveProfile = () => {
     setProfileData(editData);
     setShowEditModal(false);
@@ -148,13 +167,62 @@ export default function ProfileScreen() {
     );
   };
 
-  const handleChangeProfilePicture = () => {
-    Alert.alert("Change Profile Picture", "Choose an option", [
-      { text: "Camera", onPress: () => console.log("Open camera") },
-      { text: "Gallery", onPress: () => console.log("Open gallery") },
-      { text: "Cancel", style: "cancel" },
-    ]);
+  const handleSubmit = async (image: any) => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      const formdata = new FormData();
+      formdata.append("user_image", JSON.stringify(image));
+      console.log("formdata", formdata);
+
+      const { data } = await axios.post(baseUrl + "/profile", formdata, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          // "Content-Type": "multipart/form-data",
+        },
+      });
+      console.log("Image Upload", data);
+      Toast.show({
+        type: "success",
+        text1: data.message,
+      });
+      setImage(image.uri);
+    } catch (error) {
+      console.log("Upload user image:", error);
+    }
   };
+
+  const handleChangeProfilePicture = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 1,
+    });
+
+    console.log("result", result);
+
+    if (!result.cancelled) {
+      const fileSize = result.assets[0].fileSize;
+      const fileSizeInMB = fileSize / (1024 * 1024);
+
+      if (fileSizeInMB > 10) {
+        Toast.show({
+          type: "error",
+          text1: "File size exceeds 10MB limit.",
+        });
+        return;
+      }
+      handleSubmit({
+        uri: result.assets[0].uri,
+        type: result.assets[0].mimeType || "image/jpeg",
+        name: result.assets[0].fileName || "image.jpg",
+      });
+    }
+  };
+
+  useEffect(() => {
+    fetchUser();
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -175,7 +243,9 @@ export default function ProfileScreen() {
           >
             <Image
               source={{
-                uri: "https://images.pexels.com/photos/8728380/pexels-photo-8728380.jpeg",
+                uri:
+                  image ||
+                  "https://images.pexels.com/photos/8728380/pexels-photo-8728380.jpeg",
               }}
               style={styles.profileImage}
               resizeMode="cover"
@@ -185,7 +255,7 @@ export default function ProfileScreen() {
             </View>
           </TouchableOpacity>
 
-          <Text style={styles.profileName}>{profileData.name}</Text>
+          <Text style={styles.profileName}>{name}</Text>
         </View>
 
         {/* Menu Items */}

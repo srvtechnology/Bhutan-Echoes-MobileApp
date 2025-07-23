@@ -37,18 +37,17 @@ export default function EditProfile() {
   const handleSubmit = async () => {
     try {
       const token = await AsyncStorage.getItem("token");
-      const { data } = await axios.put(
-        baseUrl + "/profile-info-update",
-        {
-          name,
-          email,
+      const formdata = new FormData();
+      formdata.append("name", name);
+      formdata.append("email", email);
+
+      const { data } = await axios.post(baseUrl + "/profile", formdata, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          // "Content-Type": "application/json",
+          "Content-Type": "multipart/form-data",
         },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      });
       console.log("User", data);
       Toast.show({
         type: "success",
@@ -62,7 +61,7 @@ export default function EditProfile() {
 
   useEffect(() => {
     fetchUser();
-  });
+  }, []);
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>

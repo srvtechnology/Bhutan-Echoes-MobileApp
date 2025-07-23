@@ -40,8 +40,8 @@ export default function EditProfile() {
     }
     try {
       const token = await AsyncStorage.getItem("token");
-      const { data } = await axios.put(
-        baseUrl + "/profile-info-update",
+      const { data } = await axios.post(
+        baseUrl + "/profile",
         {
           password: newPassword,
         },
@@ -51,7 +51,7 @@ export default function EditProfile() {
           },
         }
       );
-      console.log("User", data);
+      console.log("Password", data);
       Toast.show({
         type: "success",
         text1: data.message,
