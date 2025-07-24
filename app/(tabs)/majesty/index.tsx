@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -15,7 +15,7 @@ import { Play, UserCircle2 } from "lucide-react-native";
 import Header from "@/components/header";
 import { Video } from "expo-av";
 import axios from "axios";
-import { baseUrl } from "@/config";
+import { baseUrl, mediaUrl } from "@/config";
 import { router } from "expo-router";
 import MajestyAudio from "@/components/MajestyAudio";
 
@@ -32,6 +32,7 @@ export default function MajestyTimelineScreen() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [data, setData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const handleImageScroll = (event: any) => {
     const contentOffset = event.nativeEvent.contentOffset;
@@ -70,20 +71,41 @@ export default function MajestyTimelineScreen() {
     setIsLoading(true);
     try {
       const response = await axios.get(`${baseUrl}/all-media`);
+      // console.log("Majesty response", response.data);
+
       const mediaList = response?.data?.all_medias || [];
       const updatedList = mediaList.map((item) => {
         if (item.media_type === "image" && typeof item.media_url === "string") {
           try {
             const parsedUrls = JSON.parse(item.media_url.replace(/\\/g, ""));
-            const fullUrls = parsedUrls.map((url) => `${baseUrl}${url}`);
+            const fullUrls = parsedUrls.map((url) => `${mediaUrl}${url}`);
             return { ...item, media_url: fullUrls };
           } catch (e) {
             console.warn("Failed to parse media_url for image:", item.id);
             return item;
           }
         }
+        if (item.media_type === "audio") {
+          try {
+            const fullUrls = `${mediaUrl}${item.media_url}`;
+            return { ...item, media_url: fullUrls };
+          } catch (e) {
+            console.warn("Failed to parse media_url for audio:", item.id);
+            return item;
+          }
+        }
+        if (item.media_type === "video") {
+          try {
+            const fullUrls = `${mediaUrl}${item.media_url}`;
+            return { ...item, media_url: fullUrls };
+          } catch (e) {
+            console.warn("Failed to parse media_url for audio:", item.id);
+            return item;
+          }
+        }
         return item;
       });
+      // console.log("updatedList", updatedList);
 
       setData(updatedList);
       setIsLoading(false);
@@ -92,6 +114,11 @@ export default function MajestyTimelineScreen() {
       setIsLoading(false);
     }
   };
+  const handleRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchData();
+    setRefreshing(false);
+  }, []);
 
   useEffect(() => {
     fetchData();
@@ -99,7 +126,6 @@ export default function MajestyTimelineScreen() {
 
   const renderItem = ({ item }) => {
     const mediaType = item.media_type;
-    console.log("mediaType", mediaType, " - ", item.media_url);
 
     return (
       <View style={styles.timelineItem}>
@@ -182,17 +208,18 @@ export default function MajestyTimelineScreen() {
     );
   };
 
-  if (isLoading) {
-    return (
-      <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color="#48732C" />
-      </View>
-    );
-  }
+  // if (isLoading) {
+  //   return (
+  //     <View style={styles.loaderContainer}>
+  //       <ActivityIndicator size="large" color="#48732C" />
+  //     </View>
+  //   );
+  // }
   return (
     <View style={styles.container}>
       {/* Header */}
       <Header back={false} title="Majesty Timeline" />
+
       {/* Quiz Button */}
       <TouchableOpacity
         style={styles.quizButton}
@@ -200,9 +227,15 @@ export default function MajestyTimelineScreen() {
       >
         <Text style={styles.quizButtonText}>Majesty Quizes</Text>
       </TouchableOpacity>
+      {refreshing ||
+        (isLoading && (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#48732C" />
+          </View>
+        ))}
 
       {/* Timeline Feed */}
-      {data?.length === 0 ? (
+      {data?.length === 0 && !isLoading ? (
         <View style={styles.loaderContainer}>
           <Text>No Data Found!</Text>
         </View>
@@ -212,8 +245,9 @@ export default function MajestyTimelineScreen() {
           keyExtractor={(item) => item.id?.toString()}
           renderItem={renderItem}
           style={styles.scrollView}
-          // contentContainerStyle={styles.flatListContent}
           showsVerticalScrollIndicator={false}
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
         />
       )}
     </View>
@@ -221,6 +255,11 @@ export default function MajestyTimelineScreen() {
 }
 
 const styles = StyleSheet.create({
+  loadingContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 20,
+  },
   loaderContainer: {
     flex: 1,
     justifyContent: "center",

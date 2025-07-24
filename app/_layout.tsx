@@ -13,6 +13,18 @@ import { View, ActivityIndicator, Platform } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import Toast from "react-native-toast-message";
 import { ToastRoot } from "@/components/ToastHelper";
+import { NotificationProvider } from "@/context/NotificationContext";
+import * as Notifications from "expo-notifications";
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldShowAlert: true,
+  }),
+});
 
 declare global {
   interface Window {
@@ -40,27 +52,29 @@ export default function RootLayout() {
   }
 
   return (
-    <SafeAreaProvider>
-      {Platform.OS === "ios" && (
-        <View
-          style={{
-            height: 46,
-            backgroundColor: "#48732C",
-          }}
-        />
-      )}
-      <StatusBar backgroundColor="#48732C" style="light" />
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="splash" />
-        <Stack.Screen name="auth" />
-        <Stack.Screen name="signup" />
-        <Stack.Screen name="forgot" />
-        <Stack.Screen name="notification" />
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <Toast />
-      <ToastRoot />
-    </SafeAreaProvider>
+    <NotificationProvider>
+      <SafeAreaProvider>
+        {Platform.OS === "ios" && (
+          <View
+            style={{
+              height: 46,
+              backgroundColor: "#48732C",
+            }}
+          />
+        )}
+        <StatusBar backgroundColor="#48732C" style="light" />
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="splash" />
+          <Stack.Screen name="auth" />
+          <Stack.Screen name="signup" />
+          <Stack.Screen name="forgot" />
+          <Stack.Screen name="notification" />
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="+not-found" />
+        </Stack>
+        <Toast />
+        <ToastRoot />
+      </SafeAreaProvider>
+    </NotificationProvider>
   );
 }

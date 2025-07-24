@@ -10,12 +10,16 @@ import { useRouter } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import CustomText from "@/components/ui/CustomText";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNotification } from "@/context/NotificationContext";
 
 export default function SplashScreen() {
   const router = useRouter();
+  const { error, expoPushToken, notification } = useNotification();
 
   const handleGetStarted = async () => {
     const isToken = await AsyncStorage.getItem("token");
+    console.log("Notification token:", expoPushToken);
+    console.log("Notification Data:", notification?.request.content.data);
 
     router.push(isToken ? "/(tabs)/home" : "/auth");
   };

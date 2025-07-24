@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { X } from "lucide-react-native";
 import StarRating from "./StarRating";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 interface RatingModalProps {
   visible: boolean;
@@ -39,70 +40,79 @@ export default function RatingModal({
 
   return (
     <Modal visible={visible} animationType="fade" transparent>
-      <SafeAreaView style={styles.container}>
-        <View style={styles.modalContent}>
-          <View style={styles.header}>
-            <Text style={styles.title}>Your Rating</Text>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <X size={24} color="#fff" />
-            </TouchableOpacity>
-          </View>
+      <KeyboardAwareScrollView
+        contentContainerStyle={{ flexGrow: 1 }}
+        keyboardShouldPersistTaps="handled"
+        enableOnAndroid={true}
+        showsVerticalScrollIndicator={false}
+      >
+        <SafeAreaView style={styles.container}>
+          <View style={styles.modalContent}>
+            <View style={styles.header}>
+              <Text style={styles.title}>Your Rating</Text>
+              <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+                <X size={24} color="#fff" />
+              </TouchableOpacity>
+            </View>
 
-          <View style={styles.content}>
-            <View style={styles.ratingSection}>
-              <StarRating
-                rating={rating}
-                onRatingChange={setRating}
-                size={40}
+            <View style={styles.content}>
+              <View style={styles.ratingSection}>
+                <StarRating
+                  rating={rating}
+                  onRatingChange={setRating}
+                  size={40}
+                />
+              </View>
+
+              <View style={styles.userInfo}>
+                <View style={styles.avatar}>
+                  {user?.user_image ? (
+                    <Image
+                      source={{ uri: user?.user_image }}
+                      style={{ width: 40, height: 40, borderRadius: "100%" }}
+                      resizeMode="cover"
+                    />
+                  ) : (
+                    <Text style={styles.avatarText}>
+                      {user?.name.charAt(0)}
+                    </Text>
+                  )}
+                </View>
+                <Text style={styles.username}>{user?.name}</Text>
+              </View>
+
+              <TextInput
+                style={styles.commentInput}
+                placeholder="Write your comments"
+                multiline
+                value={comment}
+                onChangeText={setComment}
+                textAlignVertical="top"
               />
             </View>
 
-            <View style={styles.userInfo}>
-              <View style={styles.avatar}>
-                {user?.user_image ? (
-                  <Image
-                    source={{ uri: user?.user_image }}
-                    style={{ width: 40, height: 40, borderRadius: "100%" }}
-                    resizeMode="cover"
-                  />
-                ) : (
-                  <Text style={styles.avatarText}>{user?.name.charAt(0)}</Text>
-                )}
-              </View>
-              <Text style={styles.username}>{user?.name}</Text>
-            </View>
-
-            <TextInput
-              style={styles.commentInput}
-              placeholder="Write your comments"
-              multiline
-              value={comment}
-              onChangeText={setComment}
-              textAlignVertical="top"
-            />
-          </View>
-
-          <View style={styles.footer}>
-            <TouchableOpacity
-              style={[
-                styles.submitButton,
-                rating > 0 && styles.submitButtonActive,
-              ]}
-              onPress={handleSubmit}
-              disabled={rating === 0}
-            >
-              <Text
+            <View style={styles.footer}>
+              <TouchableOpacity
                 style={[
-                  styles.submitButtonText,
-                  rating > 0 && styles.submitButtonTextActive,
+                  styles.submitButton,
+                  rating > 0 && styles.submitButtonActive,
                 ]}
+                onPress={handleSubmit}
+                disabled={rating === 0}
               >
-                Post
-              </Text>
-            </TouchableOpacity>
+                <Text
+                  style={[
+                    styles.submitButtonText,
+                    rating > 0 && styles.submitButtonTextActive,
+                  ]}
+                >
+                  Post
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </SafeAreaView>
+        </SafeAreaView>
+      </KeyboardAwareScrollView>
     </Modal>
   );
 }

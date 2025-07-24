@@ -81,7 +81,7 @@ export default function LiveEvents() {
         ) : (
           filteredEvents.map((event: any, index) => (
             <TouchableOpacity
-              key={index + event.id}
+              key={`${index} - ${event.id}`}
               style={styles.featuredCard}
               onPress={() =>
                 router.push({

@@ -6,6 +6,7 @@ import {
   TextInput,
   TouchableOpacity,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import axios from "axios";
@@ -18,8 +19,10 @@ import { MoveLeft } from "lucide-react-native";
 export default function EditProfile() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
 
   const fetchUser = async () => {
+    setIsLoading(true);
     try {
       const token = await AsyncStorage.getItem("token");
       const { data } = await axios.get(baseUrl + "/profile", {
@@ -30,13 +33,16 @@ export default function EditProfile() {
       console.log("User", data);
       setName(data.user.name);
       setEmail(data.user.email);
+      setIsLoading(false);
     } catch (error) {
       console.log("Error fetching user:", error);
+      setIsLoading(false);
     }
   };
   const handleSubmit = async () => {
     try {
       const token = await AsyncStorage.getItem("token");
+      const localUser = await AsyncStorage.getItem("user");
       const formdata = new FormData();
       formdata.append("name", name);
       formdata.append("email", email);
@@ -48,7 +54,13 @@ export default function EditProfile() {
           "Content-Type": "multipart/form-data",
         },
       });
-      console.log("User", data);
+
+      const updatedUser = {
+        ...data.user,
+        user_image: data.user_image,
+      };
+      await AsyncStorage.setItem("user", JSON.stringify(updatedUser));
+
       Toast.show({
         type: "success",
         text1: data.message,
@@ -62,6 +74,14 @@ export default function EditProfile() {
   useEffect(() => {
     fetchUser();
   }, []);
+
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color="#48732C" />
+      </View>
+    );
+  }
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>

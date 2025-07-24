@@ -8,6 +8,8 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
+  Platform,
+  StatusBar,
 } from "react-native";
 import {
   Search,
@@ -246,7 +248,7 @@ export default function ResourcesScreen() {
   }, []);
 
   return (
-    <View style={styles.container} edges={["top", "left", "right"]}>
+    <View style={styles.container}>
       {/* Header */}
       <View style={{ position: "relative" }}>
         <Header title="Resources for free" back={false} />
@@ -350,7 +352,7 @@ const styles = StyleSheet.create({
   filterButton: {
     position: "absolute",
     right: 80,
-    top: 24,
+    top: Platform.OS === "android" ? StatusBar.currentHeight + 28 : 24,
   },
   searchSection: {
     paddingHorizontal: 20,

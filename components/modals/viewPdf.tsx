@@ -1,6 +1,13 @@
 /** @format */
 
-import { View, Text, StyleSheet, TouchableOpacity, Modal } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Modal,
+  Dimensions,
+} from "react-native";
 import React, { useState } from "react";
 import { X } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -12,7 +19,8 @@ interface Props {
   setShowPostModal: (e: any) => void;
   url: string;
 }
-
+const windowWidth = Dimensions.get("window").width;
+const windowHeight = Dimensions.get("window").height;
 const ViewPdf: React.FC<Props> = ({ showPostModal, setShowPostModal, url }) => {
   const [postText, setPostText] = useState("");
   const [attachment, setAttachment] = useState<{
@@ -33,23 +41,21 @@ const ViewPdf: React.FC<Props> = ({ showPostModal, setShowPostModal, url }) => {
     >
       <SafeAreaView style={styles.centeredView}>
         <View style={styles.centeredView}>
-          <View style={styles.commentBox}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>View PDF</Text>
-              <TouchableOpacity
-                style={styles.closeButton}
-                onPress={() => setShowPostModal(false)}
-              >
-                <X size={18} color="#fff" />
-              </TouchableOpacity>
-            </View>
-            <View
-              style={{
-                // padding: 20,
-                height: "95%",
-              }}
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>View PDF</Text>
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setShowPostModal(false)}
             >
-              {/* <Pdf
+              <X size={18} color="#fff" />
+            </TouchableOpacity>
+          </View>
+          <View
+            style={{
+              flex: 1,
+            }}
+          >
+            {/* <Pdf
                 trustAllCerts={false}
                 source={{
                   uri: url,
@@ -62,13 +68,12 @@ const ViewPdf: React.FC<Props> = ({ showPostModal, setShowPostModal, url }) => {
                   console.log(`number of pages: ${numberOfPages}`);
                 }}
               /> */}
-              <WebView
-                source={{
-                  uri: `https://docs.google.com/gview?embedded=true&url=${url}`,
-                }}
-                style={{ flex: 1 }}
-              />
-            </View>
+            <WebView
+              source={{
+                uri: `https://docs.google.com/gview?embedded=true&url=${url}`,
+              }}
+              style={{ flex: 1 }}
+            />
           </View>
         </View>
       </SafeAreaView>
@@ -78,15 +83,9 @@ const ViewPdf: React.FC<Props> = ({ showPostModal, setShowPostModal, url }) => {
 
 const styles = StyleSheet.create({
   centeredView: {
-    // flex: 1,
-    height: "100%",
-    width: "100%",
-    justifyContent: "center",
-    alignItems: "center",
+    flex: 1,
     backgroundColor: "#fff",
-    // padding: 15,
   },
-  commentBox: { width: "100%", backgroundColor: "#fff" },
   avatar: {
     width: 31,
     height: 31,

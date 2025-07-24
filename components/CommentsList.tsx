@@ -35,7 +35,7 @@ export default function CommentsList({
           {item?.user?.user_image ? (
             <Image
               source={{ uri: item?.user?.user_image }}
-              style={{ width: 41, height: 41, borderRadius: "100%" }}
+              style={{ width: 41, height: 41, borderRadius: 50 }}
               resizeMode="cover"
             />
           ) : (

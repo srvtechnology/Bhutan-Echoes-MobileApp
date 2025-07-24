@@ -9,9 +9,10 @@ import {
   FlatList,
   ImageBackground,
   Image,
+  ActivityIndicator,
 } from "react-native";
-import { useState, useEffect } from "react";
-import { User, Plus, Flag } from "lucide-react-native";
+import { useState, useEffect, useCallback } from "react";
+import { User, Plus, Flag, Activity } from "lucide-react-native";
 import CustomText from "@/components/ui/CustomText";
 import Header from "@/components/header";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -38,11 +39,12 @@ export default function HomeScreen() {
   const [userDetails, setUserDetails] = useState({});
   const [showFlagModal, setShowFlagModal] = useState(false);
   const [postId, setPostId] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
 
   const fetchPosts = async () => {
     try {
       const { data } = await axios(baseUrl + "/timeline-entries");
-      console.log("Posts: ------ ", data);
+      // console.log("Posts: ------ ", data);
 
       setPosts(data.timeline_entries);
     } catch (error) {
@@ -50,6 +52,12 @@ export default function HomeScreen() {
       showToast("error", "Error fetching posts", "Please try again.");
     }
   };
+
+  const handleRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchPosts();
+    setRefreshing(false);
+  }, []);
   const fetchUserDetailsFromLocalStorage = async () => {
     try {
       const userDetails = await AsyncStorage.getItem("user");
@@ -254,10 +262,33 @@ export default function HomeScreen() {
     router.push("/(tabs)/home/normalEvents");
   };
 
+  const dummyBanners = [
+    {
+      id: 1,
+      image: require("../../../assets/images/bannerBg.png"),
+      title: "Lorem Ipsum Dolor",
+    },
+    {
+      id: 2,
+      image: require("../../../assets/images/bannerBg.png"),
+      title: "Lorem Ipsum Dolor",
+    },
+    {
+      id: 3,
+      image: require("../../../assets/images/bannerBg.png"),
+      title: "Lorem Ipsum Dolor",
+    },
+  ];
+
   return (
     <View style={styles.container}>
       {/* Header */}
       <Header title="Bhutan Echoes" back={false} />
+      {refreshing && (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#48732C" />
+        </View>
+      )}
       {/* User Post */}
       <FlatList
         ListHeaderComponent={
@@ -267,13 +298,17 @@ export default function HomeScreen() {
               <Carousel
                 width={screnWidth / 1.1}
                 height={200}
-                data={featuredEvents}
+                data={dummyBanners}
+                // data={featuredEvents}
                 renderItem={({ item }: any) => (
                   <ImageBackground
-                    source={{ uri: item.banner_images[0] }}
+                    resizeMode="cover"
+                    resizeMethod="auto"
+                    source={item.image}
+                    // source={{ uri: item.banner_images[0] }}
                     style={styles.featuredBackground}
                   >
-                    <View style={styles.featuredContent}>
+                    {/* <View style={styles.featuredContent}>
                       <Text style={styles.featuredTitle}>{item.title}</Text>
                       <Text style={styles.featuredTitle}>
                         {moment(item.end_date).format("YYYY")}
@@ -283,7 +318,7 @@ export default function HomeScreen() {
                         {moment(item.end_date).format("D MMMM")}
                       </Text>
                       <Text style={styles.saveButtonText}>SAVE THE DATE</Text>
-                    </View>
+                    </View> */}
                   </ImageBackground>
                 )}
                 loop
@@ -385,6 +420,8 @@ export default function HomeScreen() {
         renderItem={renderPost}
         contentContainerStyle={{ paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
+        refreshing={refreshing}
+        onRefresh={handleRefresh}
       />
 
       {/* Floating Action Button */}
@@ -396,12 +433,13 @@ export default function HomeScreen() {
       </TouchableOpacity>
 
       {/* Post Modal */}
-      <AddPost
-        setShowPostModal={setShowPostModal}
-        showPostModal={showPostModal}
-        onPostCreated={handlePostCreated}
-        user={userDetails}
-      />
+      {showPostModal && (
+        <AddPost
+          setShowPostModal={setShowPostModal}
+          showPostModal={showPostModal}
+          onPostCreated={handlePostCreated}
+        />
+      )}
       {/* Flag Modal */}
       <FlagModal
         showPostModal={showFlagModal}
@@ -413,6 +451,11 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  loadingContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 20,
+  },
   container: {
     flex: 1,
   },
@@ -425,13 +468,15 @@ const styles = StyleSheet.create({
     paddingTop: 20,
   },
   featuredBackground: {
-    flex: 1,
-    overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    // flex: 1,
+    // overflow: "hidden",
+    // shadowColor: "#000",
+    // shadowOffset: { width: 0, height: 4 },
+    // shadowOpacity: 0.3,
+    // shadowRadius: 8,
+    // elevation: 8,
+    height: 250,
+    width: screnWidth / 1.1,
   },
   featuredContent: {
     flex: 1,
@@ -466,7 +511,7 @@ const styles = StyleSheet.create({
   },
   eventItem: {
     alignItems: "center",
-    marginHorizontal: 10,
+    marginHorizontal: 5,
   },
   eventSeeMore: {
     fontSize: 16,

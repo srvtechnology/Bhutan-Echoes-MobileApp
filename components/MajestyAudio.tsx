@@ -4,8 +4,6 @@ import { Audio } from "expo-av";
 import { Pause, Play } from "lucide-react-native";
 
 export default function MajestyAudio(item: any) {
-  console.log(item.item);
-
   const [isPlaying, setIsPlaying] = useState(false);
   const [playButtonId, setPlayButtonId] = useState(false);
   const [sound, setSound] = useState<Audio.Sound | null>(null);
@@ -29,8 +27,8 @@ export default function MajestyAudio(item: any) {
       }
 
       const { sound: newSound } = await Audio.Sound.createAsync({
-        // uri:          item?.item..media_url
-        uri: "https://www.learningcontainer.com/wp-content/uploads/2020/02/Kalimba.mp3",
+        uri: item?.item.media_url,
+        // uri: "https://www.learningcontainer.com/wp-content/uploads/2020/02/Kalimba.mp3",
       });
 
       setSound(newSound);

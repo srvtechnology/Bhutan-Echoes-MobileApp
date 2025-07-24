@@ -10,6 +10,5 @@ node_modules
 
 # android/gradle.properties
 
-google-services.json
 GoogleService-Info.plist
 b-echoes-firebase-adminsdk-fbsvc-d724070c11.json

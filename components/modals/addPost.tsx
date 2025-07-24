@@ -9,25 +9,25 @@ import {
   TextInput,
   Image,
 } from "react-native";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import * as ImagePicker from "expo-image-picker";
 import { Paperclip, User, X } from "lucide-react-native";
 import { Video } from "expo-av";
 import Toast from "react-native-toast-message";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 interface Props {
   showPostModal: boolean;
   setShowPostModal: (e: any) => void;
   onPostCreated: (post: any) => void;
-  user: any;
 }
 
 const AddPost: React.FC<Props> = ({
   showPostModal,
   setShowPostModal,
   onPostCreated,
-  user,
 }) => {
   const [postText, setPostText] = useState("");
   const [attachment, setAttachment] = useState<{
@@ -36,6 +36,22 @@ const AddPost: React.FC<Props> = ({
     name: string;
     fileType: string;
   } | null>(null);
+  const [user, setUser] = useState(null);
+
+  const fetchUser = async () => {
+    try {
+      const user = await AsyncStorage.getItem("user");
+      console.log("user", user);
+
+      setUser(JSON.parse(user));
+    } catch (error) {
+      console.error("Error fetching user:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchUser();
+  }, []);
 
   const pickAttachment = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -111,94 +127,105 @@ const AddPost: React.FC<Props> = ({
             setShowPostModal(!showPostModal);
           }}
         >
-          <View style={styles.centeredView}>
-            <View style={styles.commentBox}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Post Your Love</Text>
-                <TouchableOpacity
-                  style={styles.closeButton}
-                  onPress={() => setShowPostModal(false)}
-                >
-                  <X size={18} color="#fff" />
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.modalUserInfo}>
-                <View style={styles.avatar}>
-                  {user.user_image ? (
-                    <Image
-                      source={{ uri: user.user_image }}
-                      style={styles.avatarImage}
-                      resizeMode="cover"
-                    />
-                  ) : (
-                    <User size={20} color={"#444"} />
-                  )}
-                </View>
-                <Text style={styles.username}>{user.name}</Text>
-              </View>
-
-              <TextInput
-                style={styles.postInput}
-                placeholder="Write something! (Like Poems, Photos, Story...)"
-                multiline
-                value={postText}
-                onChangeText={setPostText}
-                textAlignVertical="top"
-              />
-
-              {attachment && (
-                <View
-                  style={{
-                    alignItems: "center",
-                  }}
-                >
-                  {attachment.fileType === "image" ? (
-                    <Image
-                      source={{ uri: attachment.uri }}
-                      style={{ width: "100%", height: 160, marginVertical: 10 }}
-                      resizeMode="contain"
-                    />
-                  ) : (
-                    <Video
-                      source={{ uri: attachment.uri }}
-                      style={styles.postVideo}
-                      useNativeControls
-                      resizeMode="contain"
-                      shouldPlay={false}
-                    />
-                  )}
-                </View>
-              )}
-
-              <View style={styles.modalActions}>
-                <TouchableOpacity
-                  style={styles.attachButton}
-                  onPress={pickAttachment}
-                >
-                  <Paperclip size={24} color="#000" />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[
-                    styles.postButton,
-                    (postText.length > 0 || attachment) &&
-                      styles.postButtonActive,
-                  ]}
-                  onPress={handlePost}
-                >
-                  <Text
-                    style={[
-                      styles.postButtonText,
-                      (postText.length > 0 || attachment) &&
-                        styles.postButtonTextActive,
-                    ]}
+          <KeyboardAwareScrollView
+            contentContainerStyle={{ flexGrow: 1 }}
+            keyboardShouldPersistTaps="handled"
+            enableOnAndroid={true}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.centeredView}>
+              <View style={styles.commentBox}>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>Post Your Love</Text>
+                  <TouchableOpacity
+                    style={styles.closeButton}
+                    onPress={() => setShowPostModal(false)}
                   >
-                    Post
-                  </Text>
-                </TouchableOpacity>
+                    <X size={18} color="#fff" />
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.modalUserInfo}>
+                  <View style={styles.avatar}>
+                    {user?.user_image ? (
+                      <Image
+                        source={{ uri: user?.user_image }}
+                        style={styles.avatarImage}
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <User size={20} color={"#444"} />
+                    )}
+                  </View>
+                  <Text style={styles.username}>{user?.name}</Text>
+                </View>
+
+                <TextInput
+                  style={styles.postInput}
+                  placeholder="Write something! (Like Poems, Photos, Story...)"
+                  multiline
+                  value={postText}
+                  onChangeText={setPostText}
+                  textAlignVertical="top"
+                />
+
+                {attachment && (
+                  <View
+                    style={{
+                      alignItems: "center",
+                    }}
+                  >
+                    {attachment.fileType === "image" ? (
+                      <Image
+                        source={{ uri: attachment.uri }}
+                        style={{
+                          width: "100%",
+                          height: 160,
+                          marginVertical: 10,
+                        }}
+                        resizeMode="contain"
+                      />
+                    ) : (
+                      <Video
+                        source={{ uri: attachment.uri }}
+                        style={styles.postVideo}
+                        useNativeControls
+                        resizeMode="contain"
+                        shouldPlay={false}
+                      />
+                    )}
+                  </View>
+                )}
+
+                <View style={styles.modalActions}>
+                  <TouchableOpacity
+                    style={styles.attachButton}
+                    onPress={pickAttachment}
+                  >
+                    <Paperclip size={24} color="#000" />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.postButton,
+                      (postText.length > 0 || attachment) &&
+                        styles.postButtonActive,
+                    ]}
+                    onPress={handlePost}
+                  >
+                    <Text
+                      style={[
+                        styles.postButtonText,
+                        (postText.length > 0 || attachment) &&
+                          styles.postButtonTextActive,
+                      ]}
+                    >
+                      Post
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
-          </View>
+          </KeyboardAwareScrollView>
         </Modal>
       </SafeAreaView>
     </SafeAreaProvider>
@@ -269,6 +296,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#000",
     fontFamily: "inter",
+    marginBottom: 20,
   },
   modalActions: {
     flexDirection: "row",

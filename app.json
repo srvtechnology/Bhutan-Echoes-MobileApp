@@ -10,6 +10,7 @@
     "newArchEnabled": true,
     "android": {
       "package": "com.srv.bhutanechos",
+      "googleServicesFile": "./google-services.json",
       "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/playstore.png",

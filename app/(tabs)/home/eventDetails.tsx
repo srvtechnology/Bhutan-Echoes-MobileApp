@@ -44,17 +44,6 @@ export default function EventDetailsScreen() {
 
   const { id } = useLocalSearchParams();
 
-  const pollData = {
-    id: "poll1",
-    question: "Drukyul's Literature Arts Festival, Your feedback?",
-    options: [
-      { id: "excellent", text: "Excellent", votes: 45 },
-      { id: "average", text: "Average", votes: 12 },
-      { id: "improve", text: "Need to improve", votes: 8 },
-      { id: "bad", text: "Very bad", votes: 2 },
-    ],
-  };
-
   const fetchUserFromAsync = async () => {
     try {
       const user = await AsyncStorage.getItem("user");
@@ -80,7 +69,12 @@ export default function EventDetailsScreen() {
   const fetchQuizes = async () => {
     setIsQuizLoading(true);
     try {
-      const { data } = await axios.get(baseUrl + "/live-quizzes");
+      const token = await AsyncStorage.getItem("token");
+      const { data } = await axios.get(baseUrl + "/live-quizzes", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       console.log("Quizes", data.live_quizzes[0]);
       setQuizes(data.live_quizzes[0]);
       setIsQuizLoading(false);
@@ -93,8 +87,13 @@ export default function EventDetailsScreen() {
   const fetchPolls = async () => {
     setIsPollsLoading(true);
     try {
-      const { data } = await axios.get(baseUrl + "/live-polls");
-      // console.log("polls ", data.live_polls);
+      const token = await AsyncStorage.getItem("token");
+      const { data } = await axios.get(baseUrl + "/live-polls", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      console.log("polls= ", data.live_polls);
       setPolls(data.live_polls);
       setIsPollsLoading(false);
     } catch (error) {
@@ -106,8 +105,13 @@ export default function EventDetailsScreen() {
   const fetchComments = async () => {
     setIsCommentsLoading(true);
     try {
-      const { data } = await axios.get(baseUrl + "/feedback");
-      // console.log("Comments", data);
+      const token = await AsyncStorage.getItem("token");
+      const { data } = await axios.get(baseUrl + "/feedback", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      console.log("Comments", data);
       setComments(data.feedback);
       setIsCommentsLoading(false);
     } catch (error) {
@@ -220,7 +224,7 @@ export default function EventDetailsScreen() {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <Header title={liveSessionDetails?.title} />
+      <Header title={liveSessionDetails?.title || "Event Title"} />
 
       <ScrollView
         style={styles.scrollView}
@@ -231,12 +235,13 @@ export default function EventDetailsScreen() {
           <StarRating rating={Math.floor(eventRating)} readonly size={20} />
         </View>
         {/* Video Player */}
+
         <View style={styles.videoSection}>
-          <VideoPlayer url={liveSessionDetails?.youtube_link} />
+          <VideoPlayer url={liveSessionDetails?.youtube_link || ""} />
         </View>
 
         {/* Quiz Section */}
-        {!isQuizLoading && (
+        {!isQuizLoading && quizes?.questions?.length > 0 && (
           <QuizSection
             isLoading={isQuizLoading}
             questions={quizes.questions}
@@ -245,7 +250,7 @@ export default function EventDetailsScreen() {
         )}
 
         {/* Poll Section */}
-        {!isPollsLoading && (
+        {!isPollsLoading && polls?.length > 0 && (
           <PollSection
             poll={polls}
             onVote={handlePollVote}
@@ -254,7 +259,7 @@ export default function EventDetailsScreen() {
         )}
 
         {/* Comments List */}
-        {!isCommentsLoading && (
+        {!isCommentsLoading && comments?.length > 0 && (
           <CommentsList comments={comments} isLoading={isCommentsLoading} />
         )}
 
@@ -302,7 +307,6 @@ export default function EventDetailsScreen() {
           showPostModal={showAddQuestionModal}
           setShowPostModal={setShowAddQuestionModal}
           onSubmitQuestion={handleSubmitQuestion}
-          user={userDetails}
         />
       )}
     </View>
@@ -353,34 +357,9 @@ const styles = StyleSheet.create({
     marginRight: 8,
     fontFamily: "inter",
   },
-  notificationButton: {
-    position: "relative",
-    marginLeft: 15,
-  },
-  notificationBadge: {
-    position: "absolute",
-    top: -8,
-    right: -8,
-    backgroundColor: "#FF3B30",
-    borderRadius: 10,
-    width: 20,
-    height: 20,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  notificationBadgeText: {
-    color: "white",
-    fontSize: 12,
-    fontWeight: "bold",
-  },
   videoSection: {
     paddingHorizontal: 20,
     paddingTop: 15,
-  },
-  postVideo: {
-    width: "100%",
-    height: 200,
-    borderRadius: 8,
   },
   ratingButtonSection: {
     paddingHorizontal: 20,

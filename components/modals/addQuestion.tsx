@@ -9,23 +9,26 @@ import {
   TextInput,
   Image,
 } from "react-native";
-import React, { useState } from "react";
-import { X } from "lucide-react-native";
+import React, { useEffect, useState } from "react";
+import { User, X } from "lucide-react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 
 interface Props {
   showPostModal: boolean;
   setShowPostModal: (e: any) => void;
   onSubmitQuestion: (post: any) => void;
-  user: any;
+  // user: any;
 }
 
 const AddQuestion: React.FC<Props> = ({
   showPostModal,
   setShowPostModal,
   onSubmitQuestion,
-  user,
+  // user,
 }) => {
   const [postText, setPostText] = useState("");
+  const [user, setUser] = useState(null);
 
   const handlePost = async () => {
     if (!postText) return;
@@ -40,6 +43,19 @@ const AddQuestion: React.FC<Props> = ({
     setShowPostModal(false);
   };
 
+  const fetchUser = async () => {
+    try {
+      const user = await AsyncStorage.getItem("user");
+      setUser(JSON.parse(user));
+    } catch (error) {
+      console.error("Error fetching user:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchUser();
+  }, []);
+
   return (
     <Modal
       visible={showPostModal}
@@ -49,62 +65,69 @@ const AddQuestion: React.FC<Props> = ({
         setShowPostModal(!showPostModal);
       }}
     >
-      <View style={styles.modalContainer}>
-        <View style={styles.commentBox}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Post Your Questions</Text>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setShowPostModal(false)}
-            >
-              <X size={18} color="#fff" />
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.modalUserInfo}>
-            <View style={styles.avatar}>
-              {user?.user_image ? (
-                <Image
-                  source={{ uri: user?.user_image }}
-                  style={styles.avatarImage}
-                  resizeMode="cover"
-                />
-              ) : (
-                <Text style={styles.avatarText}>{user?.name.charAt(0)}</Text>
-              )}
-            </View>
-            <Text style={styles.username}>{user?.name}</Text>
-          </View>
-
-          <TextInput
-            style={styles.postInput}
-            placeholder="Post your question"
-            multiline
-            value={postText}
-            onChangeText={setPostText}
-            textAlignVertical="top"
-          />
-
-          <View style={styles.modalActions}>
-            <TouchableOpacity
-              style={[
-                styles.postButton,
-                postText.length > 0 && styles.postButtonActive,
-              ]}
-              onPress={handlePost}
-            >
-              <Text
-                style={[
-                  styles.postButtonText,
-                  postText.length > 0 && styles.postButtonTextActive,
-                ]}
+      <KeyboardAwareScrollView
+        contentContainerStyle={{ flexGrow: 1 }}
+        keyboardShouldPersistTaps="handled"
+        enableOnAndroid={true}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.commentBox}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Post Your Questions</Text>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setShowPostModal(false)}
               >
-                Submit
-              </Text>
-            </TouchableOpacity>
+                <X size={18} color="#fff" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.modalUserInfo}>
+              <View style={styles.avatar}>
+                {user?.user_image ? (
+                  <Image
+                    source={{ uri: user?.user_image }}
+                    style={styles.avatarImage}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <User size={20} color={"#888"} />
+                )}
+              </View>
+              <Text style={styles.username}>{user?.name}</Text>
+            </View>
+
+            <TextInput
+              style={styles.postInput}
+              placeholder="Post your question"
+              multiline
+              value={postText}
+              onChangeText={setPostText}
+              textAlignVertical="top"
+            />
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity
+                style={[
+                  styles.postButton,
+                  postText.length > 0 && styles.postButtonActive,
+                ]}
+                onPress={handlePost}
+              >
+                <Text
+                  style={[
+                    styles.postButtonText,
+                    postText.length > 0 && styles.postButtonTextActive,
+                  ]}
+                >
+                  Submit
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
-      </View>
+      </KeyboardAwareScrollView>
     </Modal>
   );
 };
