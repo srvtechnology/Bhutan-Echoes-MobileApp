@@ -15,13 +15,13 @@ install! 'cocoapods',
 prepare_react_native_project!
 
 target 'BhutanEchoes' do
-  use_frameworks! :linkage => :static
-  $RNFirebaseAsStaticFramework = true
+  # use_frameworks! :linkage => :static
+  # $RNFirebaseAsStaticFramework = true
   use_expo_modules!
   pod 'RNFS', :path => '../node_modules/react-native-fs'
-  pod 'FirebaseCoreInternal', :modular_headers => true
-  pod 'GoogleUtilities', :modular_headers => true
-  pod 'FirebaseMessaging', :modular_headers => true
+  # pod 'FirebaseCoreInternal', :modular_headers => true
+  # pod 'GoogleUtilities', :modular_headers => true
+  # pod 'FirebaseMessaging', :modular_headers => true
   # pod 'GoogleUtilities', :modular_headers => true
   # pod 'FirebaseCoreInternal', :modular_headers => true
 

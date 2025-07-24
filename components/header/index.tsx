@@ -31,7 +31,7 @@ const Header = ({ title, back = true }: { title: string; back?: boolean }) => {
             <Text style={styles.headerTitle}>{title}</Text>
           </View>
           <View style={styles.headerRight}>
-            <TouchableOpacity
+            {/* <TouchableOpacity
               style={styles.notificationButton}
               onPress={() => router.push("/notification")}
             >
@@ -39,7 +39,7 @@ const Header = ({ title, back = true }: { title: string; back?: boolean }) => {
               <View style={styles.notificationBadge}>
                 <Text style={styles.notificationBadgeText}>3</Text>
               </View>
-            </TouchableOpacity>
+            </TouchableOpacity> */}
           </View>
         </View>
       </View>
