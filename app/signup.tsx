@@ -14,6 +14,7 @@ import axios from "axios";
 import { baseUrl } from "../config";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { showToast } from "@/components/ToastHelper";
+import { useNotification } from "@/context/NotificationContext";
 
 export default function SignUpScreen() {
   const [name, setName] = useState("");
@@ -22,6 +23,7 @@ export default function SignUpScreen() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { error, expoPushToken, notification } = useNotification();
 
   const validateFields = () => {
     if (!name.trim()) {
@@ -96,11 +98,29 @@ export default function SignUpScreen() {
 
     setLoading(true);
     try {
+      console.log("==== expoPushToken: ====", expoPushToken);
+      let pushToken;
+
+      if (!error || !expoPushToken) {
+        pushToken = expoPushToken;
+      } else {
+        pushToken = "";
+      }
+      console.log("==== pushToken: ====", pushToken);
+      console.log(" payload", {
+        name,
+        email,
+        password,
+        password_confirmation: confirmPassword,
+        device_token: pushToken,
+      });
+
       const response = await axios.post(baseUrl + "/register", {
         name,
         email,
         password,
         password_confirmation: confirmPassword,
+        device_token: pushToken,
       });
 
       // Handle success (store token, user data, etc.)
@@ -125,11 +145,6 @@ export default function SignUpScreen() {
 
   const handleSignIn = () => {
     router.replace("/auth");
-  };
-
-  const handleForgotPassword = () => {
-    // Handle forgot password
-    console.log("Forgot password");
   };
 
   return (
