@@ -8,6 +8,8 @@ import {
   Image,
   Dimensions,
   Alert,
+  ActivityIndicator,
+  FlatList,
 } from "react-native";
 import { Play, UserCircle2 } from "lucide-react-native";
 import Header from "@/components/header";
@@ -15,6 +17,7 @@ import { Video } from "expo-av";
 import axios from "axios";
 import { baseUrl } from "@/config";
 import { router } from "expo-router";
+import MajestyAudio from "@/components/MajestyAudio";
 
 const { width: screenWidth } = Dimensions.get("window");
 
@@ -27,6 +30,8 @@ interface QuizQuestion {
 
 export default function MajestyTimelineScreen() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [data, setData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const handleImageScroll = (event: any) => {
     const contentOffset = event.nativeEvent.contentOffset;
@@ -61,143 +66,171 @@ export default function MajestyTimelineScreen() {
     Alert.alert("Play Audio", `Playing: ${resource.title}`);
   };
 
+  const fetchData = async () => {
+    setIsLoading(true);
+    try {
+      const response = await axios.get(`${baseUrl}/all-media`);
+      const mediaList = response?.data?.all_medias || [];
+      const updatedList = mediaList.map((item) => {
+        if (item.media_type === "image" && typeof item.media_url === "string") {
+          try {
+            const parsedUrls = JSON.parse(item.media_url.replace(/\\/g, ""));
+            const fullUrls = parsedUrls.map((url) => `${baseUrl}${url}`);
+            return { ...item, media_url: fullUrls };
+          } catch (e) {
+            console.warn("Failed to parse media_url for image:", item.id);
+            return item;
+          }
+        }
+        return item;
+      });
+
+      setData(updatedList);
+      setIsLoading(false);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const renderItem = ({ item }) => {
+    const mediaType = item.media_type;
+    console.log("mediaType", mediaType, " - ", item.media_url);
+
+    return (
+      <View style={styles.timelineItem}>
+        {/* Common Royal Info */}
+
+        {/* Conditional Media Block */}
+        {mediaType === "video" && (
+          <View style={styles.videoSection}>
+            <View style={styles.royalInfoSection}>
+              <View style={styles.organizationSection}>
+                <UserCircle2 size={20} color={"purple"} />
+                <Text style={styles.organizationName}>Bhutan Echoes</Text>
+              </View>
+              {item.description ? (
+                <Text style={styles.royalDescription}>{item.description}</Text>
+              ) : null}
+            </View>
+            <Video
+              source={{
+                uri: item.media_url,
+              }}
+              style={styles.postVideo}
+              useNativeControls
+              shouldPlay={false}
+              isMuted={false}
+            />
+          </View>
+        )}
+
+        {mediaType === "audio" && <MajestyAudio item={item} />}
+
+        {mediaType === "image" && item.media_url?.length > 0 && (
+          <View style={styles.photosSection}>
+            <Text style={styles.photosTitle}>Recent photos of His Majesty</Text>
+            <View style={styles.imageSection}>
+              <ScrollView
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                onScroll={handleImageScroll}
+                scrollEventThrottle={16}
+              >
+                {Array.isArray(item.media_url) &&
+                  item.media_url?.map((image, index) => (
+                    <Image
+                      key={index}
+                      source={{ uri: image }}
+                      style={styles.eventImage}
+                      resizeMode="cover"
+                    />
+                  ))}
+              </ScrollView>
+
+              <View style={styles.imageIndicators}>
+                {Array.isArray(item.media_url) &&
+                  item.media_url.map((_, index) => (
+                    <View
+                      key={index}
+                      style={[
+                        styles.indicator,
+                        currentImageIndex === index && styles.activeIndicator,
+                      ]}
+                    />
+                  ))}
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* Default / Text-only Block */}
+        {mediaType === "text" ? (
+          <View style={styles.messageSectionContainer}>
+            <View style={styles.messageSection}>
+              <Text style={styles.messageTitle}>{item.title}</Text>
+              <Text style={styles.messageContent}>{item.description}</Text>
+            </View>
+          </View>
+        ) : null}
+      </View>
+    );
+  };
+
+  if (isLoading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#48732C" />
+      </View>
+    );
+  }
   return (
     <View style={styles.container}>
       {/* Header */}
       <Header back={false} title="Majesty Timeline" />
-      <ScrollView
-        style={styles.scrollView}
-        showsVerticalScrollIndicator={false}
+      {/* Quiz Button */}
+      <TouchableOpacity
+        style={styles.quizButton}
+        onPress={() => router.push("/(tabs)/majesty/quizes")}
       >
-        {/* Quiz Button */}
-        <TouchableOpacity
-          style={styles.quizButton}
-          onPress={() => router.push("/(tabs)/majesty/quizes")}
-        >
-          <Text style={styles.quizButtonText}>Majesty Quizes</Text>
-        </TouchableOpacity>
-        {/* Royal Information */}
-        <View style={styles.royalInfoSection}>
-          <View style={styles.organizationSection}>
-            <UserCircle2 size={20} color={"purple"} />
-            <Text style={styles.organizationName}>Bhutan Echoes</Text>
-          </View>
-          <Text style={styles.royalDescription}>
-            His Majesty King Jigme Khesar Namgyel Wangchuck is the fifth king of
-            Bhutan.
-          </Text>
+        <Text style={styles.quizButtonText}>Majesty Quizes</Text>
+      </TouchableOpacity>
+
+      {/* Timeline Feed */}
+      {data?.length === 0 ? (
+        <View style={styles.loaderContainer}>
+          <Text>No Data Found!</Text>
         </View>
-
-        {/* Hero Image */}
-        <View style={styles.videoSection}>
-          <Video
-            source={{
-              uri: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-            }}
-            style={styles.postVideo}
-            useNativeControls
-            // resizeMode="contain"
-            shouldPlay={false}
-            isMuted={false}
-            // poster="https://images.pexels.com/photos/1181673/pexels-photo-1181673.jpeg"
-          />
-        </View>
-
-        {/* Quiz Section */}
-        {/* {!isQuizLoading && (
-          <QuizSectionMajesty
-            questions={quizes?.questions}
-            onQuizComplete={handleQuizComplete}
-          />
-        )} */}
-
-        {/* Audio Resources */}
-        <View style={styles.audioSection}>
-          {audioResources.map((resource) => (
-            <View style={styles.audioContainer}>
-              <TouchableOpacity
-                key={resource.id}
-                style={styles.audioItem}
-                onPress={() => handlePlayAudio(resource)}
-              >
-                <View style={styles.audioIcon}>
-                  <Play size={24} color="white" />
-                </View>
-                <View style={styles.audioInfo}>
-                  <Text style={styles.audioTitle}>{resource.title}</Text>
-                  <Text style={styles.audioDescription}>
-                    {resource.description}
-                  </Text>
-                  {/* {resource.duration && (
-                  <Text style={styles.audioDuration}>
-                    Duration: {resource.duration}
-                  </Text>
-                )} */}
-                </View>
-              </TouchableOpacity>
-            </View>
-          ))}
-        </View>
-
-        {/* Message from His Majesty */}
-        <View style={styles.messageSectionContainer}>
-          <View style={styles.messageSection}>
-            <Text style={styles.messageTitle}>Message from His Majesty</Text>
-            <Text style={styles.messageContent}>
-              His Majesty King Jigme Khesar Namgyel Wangchuck is the fifth king
-              of Bhutan. Known for his humble personality, his approachability
-              and his popularity, he is lovingly called the People's King in the
-              country. Very few people know that is Majesty was born in
-              Kathmandu, Nepal.
-            </Text>
-          </View>
-        </View>
-
-        {/* Recent Photos */}
-        <View style={styles.photosSection}>
-          <Text style={styles.photosTitle}>Recent photos of His Majesty</Text>
-
-          <View style={styles.imageSection}>
-            <ScrollView
-              horizontal
-              pagingEnabled
-              showsHorizontalScrollIndicator={false}
-              onScroll={handleImageScroll}
-              scrollEventThrottle={16}
-            >
-              {eventImages.map((image, index) => (
-                <Image
-                  key={index}
-                  source={{ uri: image }}
-                  style={styles.eventImage}
-                  resizeMode="cover"
-                />
-              ))}
-            </ScrollView>
-
-            {/* Image Indicators */}
-            <View style={styles.imageIndicators}>
-              {eventImages.map((_, index) => (
-                <View
-                  key={index}
-                  style={[
-                    styles.indicator,
-                    currentImageIndex === index && styles.activeIndicator,
-                  ]}
-                />
-              ))}
-            </View>
-          </View>
-        </View>
-
-        {/* Bottom Spacing */}
-        <View style={styles.bottomSpacing} />
-      </ScrollView>
+      ) : (
+        <FlatList
+          data={data}
+          keyExtractor={(item) => item.id?.toString()}
+          renderItem={renderItem}
+          style={styles.scrollView}
+          // contentContainerStyle={styles.flatListContent}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  loaderContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  flatListContent: {
+    flex: 1,
+    height: "100%",
+  },
+  timelineItem: {},
   container: {
     flex: 1,
     backgroundColor: "#fff",
@@ -205,6 +238,7 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
     backgroundColor: "#fff",
+    paddingVertical: 20,
   },
   quizButton: {
     alignItems: "center",

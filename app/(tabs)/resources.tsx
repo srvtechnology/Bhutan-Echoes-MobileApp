@@ -220,8 +220,8 @@ export default function ResourcesScreen() {
       }
 
       const { sound: newSound } = await Audio.Sound.createAsync({
-        // uri:          resource?.audio_url
-        uri: "https://www.learningcontainer.com/wp-content/uploads/2020/02/Kalimba.mp3",
+        uri: resource?.audio_url,
+        // uri: "https://www.learningcontainer.com/wp-content/uploads/2020/02/Kalimba.mp3",
       });
 
       setSound(newSound);

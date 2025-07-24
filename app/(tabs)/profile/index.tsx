@@ -11,6 +11,7 @@ import {
   Modal,
   TextInput,
   Linking,
+  ActivityIndicator,
 } from "react-native";
 import {
   CreditCard as Edit,
@@ -51,6 +52,7 @@ export default function ProfileScreen() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [image, setImage] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const handleDeleteAccount = async () => {
     try {
@@ -143,6 +145,7 @@ export default function ProfileScreen() {
   ];
 
   const fetchUser = async () => {
+    setIsLoading(true);
     try {
       const token = await AsyncStorage.getItem("token");
       const { data } = await axios.get(baseUrl + "/profile", {
@@ -153,8 +156,10 @@ export default function ProfileScreen() {
       console.log("User", data);
       setName(data.user.name);
       setImage(data.user_image);
+      setIsLoading(false);
     } catch (error) {
       console.log("Error fetching user:", error);
+      setIsLoading(false);
     }
   };
 
@@ -170,18 +175,19 @@ export default function ProfileScreen() {
   const handleSubmit = async (image: any) => {
     try {
       const token = await AsyncStorage.getItem("token");
-      const formdata = new FormData();
-      formdata.append("user_image", JSON.stringify(image));
-      console.log("formdata", formdata);
+      const formData = new FormData();
+      formData.append("user_image", image);
 
-      const { data } = await axios.post(baseUrl + "/profile", formdata, {
+      const { data } = await axios.post(baseUrl + "/profile", formData, {
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-          // "Content-Type": "multipart/form-data",
+          "Content-Type": "multipart/form-data",
+          Accept: "application/json",
         },
       });
-      console.log("Image Upload", data);
+
+      // console.log("Profile image res:", data);
+
       Toast.show({
         type: "success",
         text1: data.message,
@@ -189,6 +195,10 @@ export default function ProfileScreen() {
       setImage(image.uri);
     } catch (error) {
       console.log("Upload user image:", error);
+      Toast.show({
+        type: "error",
+        text1: "Error uploading profile image. Please try again.",
+      });
     }
   };
 
@@ -224,6 +234,13 @@ export default function ProfileScreen() {
     fetchUser();
   }, []);
 
+  if (isLoading) {
+    return (
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#48732C" />
+      </View>
+    );
+  }
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
@@ -399,6 +416,11 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
+  loaderContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   container: {
     flex: 1,
     backgroundColor: "#fff",
