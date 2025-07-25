@@ -25,11 +25,6 @@ import axios from "axios";
 import { baseUrl } from "@/config";
 import { Audio } from "expo-av";
 import ViewPdf from "@/components/modals/viewPdf";
-// import {
-//   downloadFile,
-//   downloadFileWithRNFS,
-//   downloadFileSimple,
-// } from "../../helpers/downloadUtils";
 import {
   downloadFile,
   downloadFileWithProgress,

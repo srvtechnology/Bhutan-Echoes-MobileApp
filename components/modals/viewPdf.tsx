@@ -11,7 +11,6 @@ import {
 import React, { useState } from "react";
 import { X } from "lucide-react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-// import Pdf from "react-native-pdf";
 import { WebView } from "react-native-webview";
 
 interface Props {
@@ -55,19 +54,6 @@ const ViewPdf: React.FC<Props> = ({ showPostModal, setShowPostModal, url }) => {
               flex: 1,
             }}
           >
-            {/* <Pdf
-                trustAllCerts={false}
-                source={{
-                  uri: url,
-                  cache: true,
-                }}
-                style={{
-                  height: "95%",
-                }}
-                onLoadComplete={(numberOfPages, filePath) => {
-                  console.log(`number of pages: ${numberOfPages}`);
-                }}
-              /> */}
             <WebView
               source={{
                 uri: `https://docs.google.com/gview?embedded=true&url=${url}`,
