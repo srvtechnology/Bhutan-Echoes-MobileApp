@@ -25,6 +25,7 @@ import AddQuestion from "@/components/modals/addQuestion";
 import { useLocalSearchParams } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Toast from "react-native-toast-message";
+import WebView from "react-native-webview";
 
 export default function EventDetailsScreen() {
   const [showRatingModal, setShowRatingModal] = useState(false);
@@ -47,7 +48,7 @@ export default function EventDetailsScreen() {
   const fetchUserFromAsync = async () => {
     try {
       const user = await AsyncStorage.getItem("user");
-      console.log("user", user);
+      // console.log("user", user);
       setUserDetails(JSON.parse(user));
     } catch (error) {
       console.log("Error fetching user:", error);
@@ -60,6 +61,7 @@ export default function EventDetailsScreen() {
       const { data } = await axios.get(baseUrl + "/live-sessions/" + id);
       // console.log("Session details", id, data.live_session);
       setLiveSessionDetails(data.live_session);
+      setEventRating(data.live_session.avgFeedback);
       setIsLoading(false);
     } catch (error) {
       console.log("Error fetching Session details:", error);
@@ -70,13 +72,16 @@ export default function EventDetailsScreen() {
     setIsQuizLoading(true);
     try {
       const token = await AsyncStorage.getItem("token");
-      const { data } = await axios.get(baseUrl + "/live-quizzes", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      console.log("Quizes", data.live_quizzes[0]);
-      setQuizes(data.live_quizzes[0]);
+      const { data } = await axios.get(
+        baseUrl + "/live-quizzes?session_id=" + id,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      // console.log("Quizes", data.live_quizzes);
+      setQuizes(data.live_quizzes);
       setIsQuizLoading(false);
     } catch (error) {
       console.log("Error fetching quizes:", error);
@@ -88,12 +93,15 @@ export default function EventDetailsScreen() {
     setIsPollsLoading(true);
     try {
       const token = await AsyncStorage.getItem("token");
-      const { data } = await axios.get(baseUrl + "/live-polls", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      console.log("polls= ", data.live_polls);
+      const { data } = await axios.get(
+        baseUrl + "/live-polls?session_id=" + id,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      // console.log("polls===== ", data.live_polls);
       setPolls(data.live_polls);
       setIsPollsLoading(false);
     } catch (error) {
@@ -106,12 +114,12 @@ export default function EventDetailsScreen() {
     setIsCommentsLoading(true);
     try {
       const token = await AsyncStorage.getItem("token");
-      const { data } = await axios.get(baseUrl + "/feedback", {
+      const { data } = await axios.get(baseUrl + "/feedback?session_id=" + id, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      console.log("Comments", data);
+      // console.log("Comments==", data);
       setComments(data.feedback);
       setIsCommentsLoading(false);
     } catch (error) {
@@ -237,7 +245,24 @@ export default function EventDetailsScreen() {
         {/* Video Player */}
 
         <View style={styles.videoSection}>
-          <VideoPlayer url={liveSessionDetails?.youtube_link || ""} />
+          <WebView
+            style={{ flex: 1, height: 200, width: "100%" }}
+            source={{ uri: liveSessionDetails?.youtube_link || "" }}
+            scalesPageToFit
+            javaScriptEnabled
+          />
+
+          {/* {liveSessionDetails?.youtube_link &&
+          liveSessionDetails?.youtube_link.incudes("youtube") ? (
+            <WebView
+              style={{ flex: 1, height: 200, width: "100%" }}
+              source={{ uri: liveSessionDetails?.youtube_link }}
+              scalesPageToFit
+              javaScriptEnabled
+            />
+          ) : (
+            <VideoPlayer url={liveSessionDetails?.youtube_link || ""} />
+          )} */}
         </View>
 
         {/* Quiz Section */}
