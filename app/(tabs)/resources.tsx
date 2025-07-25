@@ -22,7 +22,7 @@ import {
 import Header from "@/components/header";
 import ResourceFilter from "@/components/modals/resourceFilter";
 import axios from "axios";
-import { baseUrl } from "@/config";
+import { baseUrl, mediaUrl } from "@/config";
 import { Audio } from "expo-av";
 import ViewPdf from "@/components/modals/viewPdf";
 import {
@@ -56,11 +56,12 @@ export default function ResourcesScreen() {
   const [pdfUrl, setPdfUrl] = useState(null);
   const [downloadingItems, setDownloadingItems] = useState(new Set());
   const [downloadProgress, setDownloadProgress] = useState({});
+  const [isLoading, setIsLoading] = useState(true);
 
   const filteredResources = resources.filter((resource) => {
     const matchesSearch =
-      resource?.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      resource?.author.toLowerCase().includes(searchQuery.toLowerCase());
+      resource?.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      resource?.author?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesFilter =
       selectedFilter === "All" || resource.type === selectedFilter;
     return matchesSearch && matchesFilter;
@@ -72,10 +73,7 @@ export default function ResourcesScreen() {
       {
         text: "Download",
         onPress: async () => {
-          const url =
-            resource?.type === "ebook"
-              ? resource?.file_path
-              : resource?.audio_url;
+          const url = `${mediaUrl}/storage/${resource?.file_path}`;
           const name = url?.split("/").pop();
           const itemId = resource.id;
 
@@ -96,12 +94,6 @@ export default function ResourcesScreen() {
               return newSet;
             });
           }
-
-          // startDownload(
-          //   itemId,
-          //   "https://www.irs.gov/pub/irs-pdf/f1040.pdf",
-          //   "f1040.pdf"
-          // );
         },
       },
     ]);
@@ -187,13 +179,16 @@ export default function ResourcesScreen() {
   };
 
   const fetchMedia = async () => {
+    setIsLoading(true);
     try {
       const { data } = await axios.get(baseUrl + "/media");
 
-      console.log("media", data);
+      // console.log("media", data);
       setResources(data?.media);
+      setIsLoading(false);
     } catch (error) {
       console.error("Error fetching media:", error);
+      setIsLoading(false);
     }
   };
 
@@ -215,9 +210,8 @@ export default function ResourcesScreen() {
         setSound(null);
         setIsPlaying(false);
       }
-
       const { sound: newSound } = await Audio.Sound.createAsync({
-        uri: resource?.audio_url,
+        uri: `${mediaUrl}/storage/${resource?.file_path}`,
         // uri: "https://www.learningcontainer.com/wp-content/uploads/2020/02/Kalimba.mp3",
       });
 
@@ -241,6 +235,14 @@ export default function ResourcesScreen() {
   useEffect(() => {
     fetchMedia();
   }, []);
+
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color="#48732B" />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -311,7 +313,7 @@ export default function ResourcesScreen() {
           );
         })}
 
-        {filteredResources.length === 0 && (
+        {filteredResources.length === 0 && !isLoading && (
           <View style={styles.emptyState}>
             <Text style={styles.emptyStateText}>No resources found</Text>
             <Text style={styles.emptyStateSubtext}>
@@ -331,7 +333,7 @@ export default function ResourcesScreen() {
         setSelectedFilter={setSelectedFilter}
       />
       <ViewPdf
-        url={pdfUrl}
+        url={`${mediaUrl}/storage/${pdfUrl}`}
         showPostModal={viewPdf}
         setShowPostModal={setViewPdf}
       />

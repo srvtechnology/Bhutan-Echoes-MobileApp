@@ -339,13 +339,13 @@ export default function HomeScreen() {
                   <View
                     style={[
                       styles.eventIcon,
-                      { backgroundColor: "#EEE8E8", borderColor: "#CA3115" },
+                      { backgroundColor: "#fff", borderColor: "#CA3115" },
                     ]}
                   >
-                    <View style={styles.greenBorder}>
+                    <View style={[styles.greenBorder, { overflow: "hidden" }]}>
                       <Image
-                        style={styles.eventEmoji}
-                        source={require("../../../assets/icons/camera.png")}
+                        style={{ height: 40, width: 40 }}
+                        source={require("../../../assets/icons/live.gif")}
                         resizeMode="contain"
                       />
                     </View>
@@ -400,7 +400,7 @@ export default function HomeScreen() {
                             <Image
                               style={styles.eventEmoji}
                               source={{ uri: item.icon }}
-                              resizeMode="contain"
+                              resizeMode="cover"
                             />
                           </View>
                           <Text style={styles.eventLabel}>{item.title}</Text>
@@ -549,10 +549,11 @@ const styles = StyleSheet.create({
     // marginBottom: 8,
     borderWidth: 2,
     borderColor: "#48732C",
+    overflow: "hidden",
   },
   eventEmoji: {
-    height: 34,
-    width: 34,
+    height: "100%",
+    width: "100%",
   },
   eventLabel: {
     fontSize: 10,

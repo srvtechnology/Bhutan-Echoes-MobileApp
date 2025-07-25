@@ -57,27 +57,21 @@ export default function QuizSection({
   ) => {
     try {
       const token = await AsyncStorage.getItem("token");
-      console.log(
-        "quesion answer id",
-        token,
-        questionId,
-        answerId,
-        `${baseUrl}/live-quizzes/${liveQuizId}/questions/${questionId}/answer `
-      );
 
-      const { data } = await axios.post(
-        `${baseUrl}/live-quizzes/${liveQuizId}/questions/${questionId}/answer `,
-        { selected_answer_id: answerId },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      // console.log("submit answer call", data);
+      const url = `${baseUrl}/live-quizzes/${liveQuizId}/questions/${questionId}/answer`;
+
+      const data = {
+        selected_answer_id: answerId,
+      };
+      const res = await axios.post(url, data, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      // console.log("submit answer call:", res);
     } catch (error) {
-      console.log("submit answer error", error);
+      console.log("submit answer error:", error);
 
       Toast.show({
         type: "error",
@@ -91,8 +85,6 @@ export default function QuizSection({
     questionId: string | number,
     answerId: string | number
   ) => {
-    console.log(" When Submit called");
-
     try {
       submitAnswer(liveQuizId, questionId, answerId);
       const token = await AsyncStorage.getItem("token");
@@ -112,11 +104,6 @@ export default function QuizSection({
       const score = answers.reduce((acc, answer) => {
         return acc + (answer.is_correct ? 1 : 0);
       }, 0);
-
-      Toast.show({
-        type: "success",
-        text1: data.message,
-      });
       onQuizComplete?.({
         total: questions.length,
         correct: score,
@@ -170,43 +157,46 @@ export default function QuizSection({
     <View style={styles.container}>
       <View style={styles.questionHeader}>
         <Text style={styles.questionNumber}>
-          Quiz {currentQuestionIndex + 1}: {currentQuestion.question}
+          Quiz: {currentQuestion.question}
         </Text>
       </View>
 
       <View style={styles.optionsContainer}>
-        {currentQuestion.answers.map((option, index) => (
-          <TouchableOpacity
-            disabled={isBtnDisabled}
-            key={index}
-            style={[
-              styles.optionButton,
-              selectedAnswers[currentQuestion.id] === index &&
-                !isBtnDisabled &&
-                styles.selectedOption,
-            ]}
-            onPress={() => {
-              handleAnswerSelect(index);
-
-              setSelectedAnswer({
-                questionId: currentQuestion.id,
-                answerId: option.id,
-                liveQuizId: currentQuestion.live_quiz_id,
-              });
-            }}
-          >
-            <Text
+        {currentQuestion.answers && currentQuestion.answers?.length > 0 ? (
+          currentQuestion.answers.map((option, index) => (
+            <TouchableOpacity
+              disabled={isBtnDisabled}
+              key={index}
               style={[
-                styles.optionText,
+                styles.optionButton,
                 selectedAnswers[currentQuestion.id] === index &&
                   !isBtnDisabled &&
-                  styles.selectedOptionText,
+                  styles.selectedOption,
               ]}
+              onPress={() => {
+                setSelectedAnswer({
+                  questionId: currentQuestion.id,
+                  answerId: option.id,
+                  liveQuizId: currentQuestion.live_quiz_id,
+                });
+                handleAnswerSelect(index);
+              }}
             >
-              {option.answer}
-            </Text>
-          </TouchableOpacity>
-        ))}
+              <Text
+                style={[
+                  styles.optionText,
+                  selectedAnswers[currentQuestion.id] === index &&
+                    !isBtnDisabled &&
+                    styles.selectedOptionText,
+                ]}
+              >
+                {option.answer}
+              </Text>
+            </TouchableOpacity>
+          ))
+        ) : (
+          <Text>No Options found</Text>
+        )}
       </View>
 
       <TouchableOpacity

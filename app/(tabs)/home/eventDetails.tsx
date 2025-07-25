@@ -59,7 +59,14 @@ export default function EventDetailsScreen() {
     setIsLoading(true);
     try {
       const { data } = await axios.get(baseUrl + "/live-sessions/" + id);
-      // console.log("Session details", id, data.live_session);
+      console.log("Session details", id, data.live_session);
+      if (data.live_session?.youtube_link) {
+        data.live_session.youtube_link = data.live_session.youtube_link.replace(
+          "watch?v=",
+          "embed/"
+        );
+      }
+
       setLiveSessionDetails(data.live_session);
       setEventRating(data.live_session.avgFeedback);
       setIsLoading(false);
@@ -69,6 +76,8 @@ export default function EventDetailsScreen() {
     }
   };
   const fetchQuizes = async () => {
+    console.log("Session Id:", id);
+
     setIsQuizLoading(true);
     try {
       const token = await AsyncStorage.getItem("token");
@@ -266,13 +275,18 @@ export default function EventDetailsScreen() {
         </View>
 
         {/* Quiz Section */}
-        {!isQuizLoading && quizes?.questions?.length > 0 && (
-          <QuizSection
-            isLoading={isQuizLoading}
-            questions={quizes.questions}
-            onQuizComplete={handleQuizComplete}
-          />
-        )}
+        {!isQuizLoading &&
+          quizes?.length > 0 &&
+          quizes?.map(
+            (question: any) =>
+              question.questions?.length > 0 && (
+                <QuizSection
+                  isLoading={isQuizLoading}
+                  questions={question.questions}
+                  onQuizComplete={handleQuizComplete}
+                />
+              )
+          )}
 
         {/* Poll Section */}
         {!isPollsLoading && polls?.length > 0 && (

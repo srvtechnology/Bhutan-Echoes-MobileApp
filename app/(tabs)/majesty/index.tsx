@@ -159,7 +159,7 @@ export default function MajestyTimelineScreen() {
 
         {mediaType === "image" && item.media_url?.length > 0 && (
           <View style={styles.photosSection}>
-            <Text style={styles.photosTitle}>Recent photos of His Majesty</Text>
+            <Text style={styles.photosTitle}>{item.title}</Text>
             <View style={styles.imageSection}>
               <ScrollView
                 horizontal
