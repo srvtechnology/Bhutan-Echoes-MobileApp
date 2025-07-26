@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import { Bell, Plus, Star } from "lucide-react-native";
 import VideoPlayer from "@/components/VideoPlayer";
@@ -42,6 +43,7 @@ export default function EventDetailsScreen() {
   const [comments, setComments] = useState<Comment[]>();
   const [liveSessionDetails, setLiveSessionDetails] = useState("");
   const [userDetails, setUserDetails] = useState({});
+  const [refreshing, setRefreshing] = useState(false);
 
   const { id } = useLocalSearchParams();
 
@@ -54,17 +56,28 @@ export default function EventDetailsScreen() {
       console.log("Error fetching user:", error);
     }
   };
+  const getYouTubeEmbedUrl = (url) => {
+    const regex =
+      /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/|live\/|.*[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+    const match = url.match(regex);
+
+    if (match && match[1]) {
+      return `https://www.youtube.com/embed/${match[1]}?autoplay=0&controls=1`;
+    } else {
+      return null;
+    }
+  };
 
   const fetchLiveSessionDetails = async () => {
     setIsLoading(true);
     try {
       const { data } = await axios.get(baseUrl + "/live-sessions/" + id);
-      console.log("Session details", id, data.live_session);
-      if (data.live_session?.youtube_link) {
-        data.live_session.youtube_link = data.live_session.youtube_link.replace(
-          "watch?v=",
-          "embed/"
-        );
+      // console.log("Session details", id, data.live_session);
+      const constructedEmbedUrl = getYouTubeEmbedUrl(
+        data.live_session?.youtube_link
+      );
+      if (constructedEmbedUrl) {
+        data.live_session.youtube_link = constructedEmbedUrl;
       }
 
       setLiveSessionDetails(data.live_session);
@@ -76,8 +89,6 @@ export default function EventDetailsScreen() {
     }
   };
   const fetchQuizes = async () => {
-    console.log("Session Id:", id);
-
     setIsQuizLoading(true);
     try {
       const token = await AsyncStorage.getItem("token");
@@ -222,6 +233,17 @@ export default function EventDetailsScreen() {
     }
   };
 
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    Promise.all([
+      fetchUserFromAsync(),
+      fetchLiveSessionDetails(),
+      fetchQuizes(),
+      fetchPolls(),
+      fetchComments(),
+    ]).finally(() => setRefreshing(false));
+  }, []);
+
   useEffect(() => {
     fetchUserFromAsync();
     fetchLiveSessionDetails();
@@ -230,7 +252,7 @@ export default function EventDetailsScreen() {
     fetchComments();
   }, []);
 
-  if (isLoading) {
+  if (isLoading && !refreshing) {
     return (
       <View style={styles.indicatorContainer}>
         <ActivityIndicator color={"#48732C"} size={"large"} />
@@ -242,10 +264,18 @@ export default function EventDetailsScreen() {
     <View style={styles.container}>
       {/* Header */}
       <Header title={liveSessionDetails?.title || "Event Title"} />
-
+      {refreshing ||
+        (isLoading && (
+          <View style={{ alignItems: "center", paddingTop: 20 }}>
+            <ActivityIndicator size="large" color="#48732C" />
+          </View>
+        ))}
       <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
       >
         <View style={styles.ratingContainer}>
           <Text style={styles.ratingLabel}>Event Rating</Text>

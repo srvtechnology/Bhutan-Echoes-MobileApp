@@ -7,10 +7,12 @@ import {
   TouchableOpacity,
   Modal,
   Dimensions,
+  StatusBar,
+  Platform,
 } from "react-native";
 import React, { useState } from "react";
 import { X } from "lucide-react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 import { WebView } from "react-native-webview";
 
 interface Props {
@@ -33,12 +35,11 @@ const ViewPdf: React.FC<Props> = ({ showPostModal, setShowPostModal, url }) => {
     <Modal
       visible={showPostModal}
       animationType="fade"
-      transparent={true}
       onRequestClose={() => {
         setShowPostModal(!showPostModal);
       }}
     >
-      <SafeAreaView style={styles.centeredView}>
+      <View style={styles.centeredView}>
         <View style={styles.centeredView}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>View PDF</Text>
@@ -62,7 +63,7 @@ const ViewPdf: React.FC<Props> = ({ showPostModal, setShowPostModal, url }) => {
             />
           </View>
         </View>
-      </SafeAreaView>
+      </View>
     </Modal>
   );
 };
@@ -71,6 +72,7 @@ const styles = StyleSheet.create({
   centeredView: {
     flex: 1,
     backgroundColor: "#fff",
+    paddingTop: Platform.OS === "android" ? 0 : 25,
   },
   avatar: {
     width: 31,

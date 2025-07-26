@@ -7,8 +7,9 @@ import {
   TextInput,
   Image,
   ActivityIndicator,
+  FlatList,
 } from "react-native";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Header from "@/components/header";
 import { router } from "expo-router";
 import { Search } from "lucide-react-native";
@@ -21,6 +22,7 @@ export default function LiveEvents() {
   const [events, setEvents] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const filteredEvents = events.filter((event: any) =>
     event.title?.toLowerCase().includes(searchText.toLowerCase())
@@ -41,6 +43,12 @@ export default function LiveEvents() {
     }
   };
 
+  const handleRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchPosts();
+    setRefreshing(false);
+  }, []);
+
   useEffect(() => {
     fetchPosts();
   }, []);
@@ -49,64 +57,67 @@ export default function LiveEvents() {
     <View style={styles.container}>
       {/* Header */}
       <Header title="Live Events" />
-      <ScrollView
-        style={styles.scrollView}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Search */}
-        <View style={styles.search}>
-          <Search size={26} color={"#888"} style={styles.searchIcon} />
-          <TextInput
-            placeholder="Search Events"
-            style={styles.searchInput}
-            value={searchText}
-            onChangeText={setSearchText}
-          />
+      {loading && (
+        <View style={{ alignItems: "center", paddingTop: 20 }}>
+          <ActivityIndicator size="large" color="#48732C" />
         </View>
-        {loading && (
-          <View style={{ alignItems: "center", paddingTop: 20 }}>
-            <ActivityIndicator size="large" color="#48732C" />
-          </View>
-        )}
-
-        {/* Featured Event Card */}
-        {!loading && filteredEvents.length === 0 ? (
-          <View style={{ alignItems: "center", paddingTop: 20 }}>
-            <Text
-              style={{ fontFamily: "interMedium", fontSize: 16, color: "#333" }}
-            >
-              No data found
-            </Text>
-          </View>
-        ) : (
-          filteredEvents.map((event: any, index) => (
+      )}
+      {!loading && filteredEvents.length === 0 && (
+        <View style={{ alignItems: "center", paddingTop: 20 }}>
+          <Text
+            style={{ fontFamily: "interMedium", fontSize: 16, color: "#333" }}
+          >
+            No data found
+          </Text>
+        </View>
+      )}
+      {!loading && filteredEvents.length > 0 && (
+        <FlatList
+          ListHeaderComponent={
+            <>
+              <View style={styles.search}>
+                <Search size={26} color={"#888"} style={styles.searchIcon} />
+                <TextInput
+                  placeholder="Search Events"
+                  style={styles.searchInput}
+                  value={searchText}
+                  onChangeText={setSearchText}
+                />
+              </View>
+            </>
+          }
+          data={filteredEvents}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
             <TouchableOpacity
-              key={`${index} - ${event.id}`}
+              key={`event- ${item?.id}`}
               style={styles.featuredCard}
               onPress={() =>
                 router.push({
                   pathname: "/(tabs)/home/eventDetails",
-                  params: { id: event.id },
+                  params: { id: item?.id },
                 })
               }
             >
               <Image
-                source={{ uri: event.thumbnail }}
+                source={{ uri: item?.thumbnail }}
                 style={styles.featuredImage}
               />
               <View style={styles.eventDetails}>
-                <Text style={styles.featuredTitle}>Event: {event.title}</Text>
+                <Text style={styles.featuredTitle}>Event: {item?.title}</Text>
                 <Text style={styles.featuredTitle}>
-                  Date: {moment(event.start_time).format("D MMM, YY")} -{" "}
-                  {moment(event.end_time).format("D MMM, YY")}
+                  Date: {moment(item?.start_time).format("D MMM, YY")} -{" "}
+                  {moment(item?.end_time).format("D MMM, YY")}
                 </Text>
               </View>
             </TouchableOpacity>
-          ))
-        )}
-
-        <View style={{ height: 100 }} />
-      </ScrollView>
+          )}
+          contentContainerStyle={{ paddingBottom: 100 }}
+          showsVerticalScrollIndicator={false}
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+        />
+      )}
     </View>
   );
 }

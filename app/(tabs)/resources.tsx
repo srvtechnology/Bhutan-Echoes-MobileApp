@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Platform,
   StatusBar,
+  FlatList,
 } from "react-native";
 import {
   Search,
@@ -57,6 +58,7 @@ export default function ResourcesScreen() {
   const [downloadingItems, setDownloadingItems] = useState(new Set());
   const [downloadProgress, setDownloadProgress] = useState({});
   const [isLoading, setIsLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const filteredResources = resources.filter((resource) => {
     const matchesSearch =
@@ -231,18 +233,23 @@ export default function ResourcesScreen() {
       console.error("Playback error", err);
     }
   };
+  const handleRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchMedia();
+    setRefreshing(false);
+  }, []);
 
   useEffect(() => {
     fetchMedia();
   }, []);
 
-  if (isLoading) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" color="#48732B" />
-      </View>
-    );
-  }
+  // if (isLoading && !refreshing) {
+  //   return (
+  //     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+  //       <ActivityIndicator size="large" color="#48732B" />
+  //     </View>
+  //   );
+  // }
 
   return (
     <View style={styles.container}>
@@ -256,75 +263,83 @@ export default function ResourcesScreen() {
           <Filter size={24} color="#fff" />
         </TouchableOpacity>
       </View>
-
-      {/* Search Bar */}
-      <View style={styles.searchSection}>
-        <View style={styles.searchContainer}>
-          <Search size={20} color="#999" />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search resources"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            placeholderTextColor="#999"
-          />
+      {(refreshing || isLoading) && (
+        <View style={{ alignItems: "center", paddingTop: 20 }}>
+          <ActivityIndicator size="large" color="#48732C" />
         </View>
-      </View>
+      )}
 
-      {/* Resources List */}
-      <ScrollView
-        style={styles.scrollView}
-        showsVerticalScrollIndicator={false}
-      >
-        {filteredResources.map((resource, index) => {
-          const isDownloading = downloadingItems.has(resource.id);
-          return (
-            <View key={resource?.title + index} style={styles.resourceItem}>
-              <View style={styles.resourceContent}>
-                <View style={styles.resourceIcon}>
-                  {getResourceIcon(resource?.type)}
+      {filteredResources.length === 0 && !isLoading && (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyStateText}>No resources found</Text>
+          <Text style={styles.emptyStateSubtext}>
+            Try adjusting your search or filter criteria
+          </Text>
+        </View>
+      )}
+
+      {filteredResources.length > 0 && (
+        <FlatList
+          ListHeaderComponent={
+            <>
+              <View style={styles.searchSection}>
+                <View style={styles.searchContainer}>
+                  <Search size={20} color="#999" />
+                  <TextInput
+                    style={styles.searchInput}
+                    placeholder="Search resources"
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                    placeholderTextColor="#999"
+                  />
                 </View>
-                <View style={styles.resourceInfo}>
-                  <Text style={styles.resourceTitle}>{resource?.title}</Text>
+              </View>
+            </>
+          }
+          data={filteredResources}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => {
+            const isDownloading = downloadingItems.has(item.id);
+            return (
+              <View key={item?.title + item?.id} style={styles.resourceItem}>
+                <View style={styles.resourceContent}>
+                  <View style={styles.resourceIcon}>
+                    {getResourceIcon(item?.type)}
+                  </View>
+                  <View style={styles.resourceInfo}>
+                    <Text style={styles.resourceTitle}>{item?.title}</Text>
 
-                  <Text style={styles.resourceDescription}>
-                    {resource?.author || ""}
-                  </Text>
+                    <Text style={styles.resourceDescription}>
+                      {item?.author || ""}
+                    </Text>
 
-                  {/* {resource.size && (
+                    {/* {resource.size && (
                   <Text style={styles.resourceSize}>Size: {resource.size}</Text>
                 )} */}
+                  </View>
+                </View>
+                <View style={styles.resourceActions}>
+                  {getActionButton(item)}
+                  <TouchableOpacity
+                    style={styles.downloadButton}
+                    onPress={() => handleDownload(item)}
+                  >
+                    {isDownloading ? (
+                      <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                      <Text style={styles.downloadButtonText}>Download</Text>
+                    )}
+                  </TouchableOpacity>
                 </View>
               </View>
-              <View style={styles.resourceActions}>
-                {getActionButton(resource)}
-                <TouchableOpacity
-                  style={styles.downloadButton}
-                  onPress={() => handleDownload(resource)}
-                >
-                  {isDownloading ? (
-                    <ActivityIndicator size="small" color="#fff" />
-                  ) : (
-                    <Text style={styles.downloadButtonText}>Download</Text>
-                  )}
-                </TouchableOpacity>
-              </View>
-            </View>
-          );
-        })}
-
-        {filteredResources.length === 0 && !isLoading && (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyStateText}>No resources found</Text>
-            <Text style={styles.emptyStateSubtext}>
-              Try adjusting your search or filter criteria
-            </Text>
-          </View>
-        )}
-
-        {/* Bottom Spacing */}
-        <View style={styles.bottomSpacing} />
-      </ScrollView>
+            );
+          }}
+          contentContainerStyle={{ paddingBottom: 100 }}
+          showsVerticalScrollIndicator={false}
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+        />
+      )}
 
       {/* Filter Modal */}
       <ResourceFilter
