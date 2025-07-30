@@ -28,8 +28,8 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Toast from "react-native-toast-message";
 import { baseUrl } from "@/config";
-import axios from "axios";
 import { router } from "expo-router";
+import axiosInstance from "@/helpers/axiosInstance";
 
 interface ProfileData {
   name: string;
@@ -51,7 +51,7 @@ export default function ProfileScreen() {
 
   const handleDeleteAccount = async () => {
     try {
-      const response = await axios.post(baseUrl + "/delete-account", {
+      const response = await axiosInstance.post(baseUrl + "/delete-account", {
         password: "",
       });
       await AsyncStorage.removeItem("token");

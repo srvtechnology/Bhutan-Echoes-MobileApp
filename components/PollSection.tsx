@@ -1,6 +1,6 @@
 import { baseUrl } from "@/config";
+import axiosInstance from "@/helpers/axiosInstance";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios from "axios";
 import React, { useState } from "react";
 import {
   View,
@@ -46,7 +46,7 @@ export default function PollSection({
   const getPollResult = async (pollId: number) => {
     try {
       const token = await AsyncStorage.getItem("token");
-      const { data } = await axios.get(
+      const { data } = await axiosInstance.get(
         `${baseUrl}/live-polls/${pollId}/results`,
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -82,7 +82,7 @@ export default function PollSection({
 
     try {
       const token = await AsyncStorage.getItem("token");
-      const { data } = await axios.post(
+      const { data } = await axiosInstance.post(
         `${baseUrl}/live-polls/${pollId}/vote`,
         { option_id: selectedOption },
         {

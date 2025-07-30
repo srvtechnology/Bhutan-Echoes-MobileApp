@@ -9,8 +9,8 @@ import {
 } from "react-native";
 import Toast from "react-native-toast-message";
 import { baseUrl } from "@/config";
-import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import axiosInstance from "@/helpers/axiosInstance";
 
 interface QuizSectionProps {
   question: any[];
@@ -50,7 +50,7 @@ export default function QuizSectionMajesty({
         `${baseUrl}/live-quizzes/${liveQuizId}/questions/${questionId}/answer `
       );
 
-      const { data } = await axios.post(
+      const { data } = await axiosInstance.post(
         `${baseUrl}/live-quizzes/1/questions/${questionId}/answer `,
         { selected_answer_id: answerId },
         {

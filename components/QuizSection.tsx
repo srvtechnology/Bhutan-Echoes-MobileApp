@@ -11,8 +11,8 @@ import {
 import QuizResult from "./modals/quizResult";
 import Toast from "react-native-toast-message";
 import { baseUrl } from "@/config";
-import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import axiosInstance from "@/helpers/axiosInstance";
 
 interface QuizQuestion {
   id: string;
@@ -63,7 +63,7 @@ export default function QuizSection({
       const data = {
         selected_answer_id: answerId,
       };
-      const res = await axios.post(url, data, {
+      const res = await axiosInstance.post(url, data, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -88,7 +88,7 @@ export default function QuizSection({
     try {
       submitAnswer(liveQuizId, questionId, answerId);
       const token = await AsyncStorage.getItem("token");
-      const { data } = await axios.get(
+      const { data } = await axiosInstance.get(
         `${baseUrl}/live-quizzes/${liveQuizId}/my-answers`,
         {
           headers: {

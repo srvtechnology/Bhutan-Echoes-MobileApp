@@ -22,7 +22,6 @@ import {
 } from "lucide-react-native";
 import Header from "@/components/header";
 import ResourceFilter from "@/components/modals/resourceFilter";
-import axios from "axios";
 import { baseUrl, mediaUrl } from "@/config";
 import { Audio } from "expo-av";
 import ViewPdf from "@/components/modals/viewPdf";
@@ -30,6 +29,7 @@ import {
   downloadFile,
   downloadFileWithProgress,
 } from "../../helpers/downloadUtilsExpo";
+import axiosInstance from "@/helpers/axiosInstance";
 
 interface Resource {
   id: string;
@@ -183,7 +183,7 @@ export default function ResourcesScreen() {
   const fetchMedia = async () => {
     setIsLoading(true);
     try {
-      const { data } = await axios.get(baseUrl + "/media");
+      const { data } = await axiosInstance.get(baseUrl + "/media");
 
       // console.log("media", data);
       setResources(data?.media);

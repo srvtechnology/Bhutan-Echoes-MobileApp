@@ -8,12 +8,12 @@ import {
   Platform,
 } from "react-native";
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { baseUrl } from "@/config";
 import Toast from "react-native-toast-message";
 import { router } from "expo-router";
 import { MoveLeft } from "lucide-react-native";
+import axiosInstance from "@/helpers/axiosInstance";
 
 export default function EditProfile() {
   const [name, setName] = useState("");
@@ -40,7 +40,7 @@ export default function EditProfile() {
     }
     try {
       const token = await AsyncStorage.getItem("token");
-      const { data } = await axios.post(
+      const { data } = await axiosInstance.post(
         baseUrl + "/profile",
         {
           password: newPassword,

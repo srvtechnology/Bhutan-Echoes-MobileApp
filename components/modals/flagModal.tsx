@@ -67,6 +67,7 @@ const FlagModal: React.FC<Props> = ({
                   <TextInput
                     style={styles.postInput}
                     placeholder="Write something!"
+                    placeholderTextColor={"#888"}
                     value={flagText}
                     onChangeText={setFlagText}
                   />
@@ -76,6 +77,7 @@ const FlagModal: React.FC<Props> = ({
                   <TextInput
                     style={styles.postInput}
                     placeholder="Write something!"
+                    placeholderTextColor={"#888"}
                     value={flagDetails}
                     onChangeText={setFlagDetails}
                   />

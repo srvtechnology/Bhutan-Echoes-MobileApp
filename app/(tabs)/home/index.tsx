@@ -18,7 +18,6 @@ import Header from "@/components/header";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AddPost from "@/components/modals/addPost";
 import { router } from "expo-router";
-import axios from "axios";
 import Toast from "react-native-toast-message";
 import { baseUrl } from "@/config";
 import { Video } from "expo-av";
@@ -28,8 +27,10 @@ import moment from "moment";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import FlagModal from "@/components/modals/flagModal";
 import VideoPlayer from "@/components/VideoPlayer";
+import PostConsentModal from "@/components/modals/postConsent";
+import axiosInstance from "@/helpers/axiosInstance";
 
-const screnWidth = Dimensions.get("screen").width;
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 export default function HomeScreen() {
   const [showPostModal, setShowPostModal] = useState(false);
@@ -40,12 +41,11 @@ export default function HomeScreen() {
   const [showFlagModal, setShowFlagModal] = useState(false);
   const [postId, setPostId] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const [isConsentModal, setIsConsentModal] = useState(false);
 
   const fetchPosts = async () => {
     try {
-      const { data } = await axios(baseUrl + "/timeline-entries");
-      // console.log("Posts: ------ ", data);
-
+      const { data } = await axiosInstance.get(baseUrl + "/timeline-entries");
       setPosts(data.timeline_entries);
     } catch (error) {
       console.log("Fetch posts error:", error);
@@ -61,8 +61,6 @@ export default function HomeScreen() {
   const fetchUserDetailsFromLocalStorage = async () => {
     try {
       const userDetails = await AsyncStorage.getItem("user");
-      console.log("userDetails", userDetails);
-
       if (userDetails) {
         const parsedUserDetails = JSON.parse(userDetails);
         setUserDetails(parsedUserDetails);
@@ -74,7 +72,7 @@ export default function HomeScreen() {
 
   const fetchEvents = async () => {
     try {
-      const { data } = await axios(baseUrl + "/events");
+      const { data } = await axiosInstance.get(baseUrl + "/events");
       const featured = data.events.filter(
         (event: any) => event.is_featured === true
       );
@@ -93,8 +91,6 @@ export default function HomeScreen() {
 
   const handlePostCreated = async (post: any) => {
     try {
-      console.log("Post created:", post);
-
       const token = await AsyncStorage.getItem("token");
 
       const formData = new FormData();
@@ -110,15 +106,16 @@ export default function HomeScreen() {
       }
       formData.append("decade", new Date().getFullYear().toString());
 
-      console.log("formData", formData);
-
-      const res = await axios.post(baseUrl + "/timeline-entries", formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data",
-        },
-      });
-      console.log("res", res);
+      const res = await axiosInstance.post(
+        baseUrl + "/timeline-entries",
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
       Toast.show({
         type: "success",
@@ -129,10 +126,8 @@ export default function HomeScreen() {
         user_name: userDetails.name,
         user_image: userDetails.image,
       };
-      console.log("Post submitted:", postData);
       const newPosts = [...posts];
       newPosts.unshift(postData);
-      console.log("------", newPosts);
 
       setPosts(newPosts);
     } catch (error) {
@@ -152,7 +147,7 @@ export default function HomeScreen() {
       }
 
       if (postId?.user_id != userDetails?.id) {
-        const res = await axios.post(
+        const res = await axiosInstance.post(
           baseUrl + "/user-reports",
           {
             reported_id: postId?.user_id,
@@ -166,7 +161,6 @@ export default function HomeScreen() {
             },
           }
         );
-        console.log("Flag submitted:", res);
         Toast.show({
           type: "success",
           text1: "User reported successfully.",
@@ -179,11 +173,71 @@ export default function HomeScreen() {
     }
   };
 
-  useEffect(() => {
-    fetchUserDetailsFromLocalStorage();
-    fetchPosts();
-    fetchEvents();
-  }, []);
+  const InstagramLikeFeedItem = ({ post }: any) => {
+    const [imageAspectRatio, setImageAspectRatio] = useState(1);
+    const [imageLoaded, setImageLoaded] = useState(false);
+    const [imageError, setImageError] = useState(false);
+
+    useEffect(() => {
+      if (post.media_type === "image" && post.media_url) {
+        // Get actual image dimensions
+        Image.getSize(
+          post.media_url,
+          (width, height) => {
+            setImageAspectRatio(width / height);
+            setImageLoaded(true);
+          },
+          (error) => {
+            console.log("Failed to get image size:", error);
+            setImageError(true);
+            setImageLoaded(true);
+          }
+        );
+      }
+    }, [post.media_url]);
+
+    // Calculate optimal image height
+    const getOptimalImageHeight = () => {
+      // Instagram's constraints
+      const MIN_HEIGHT = SCREEN_WIDTH * 0.6; // Minimum height
+      const MAX_HEIGHT = SCREEN_WIDTH * 1.25; // Maximum height
+
+      if (imageError) return SCREEN_WIDTH; // Fallback to square
+
+      const calculatedHeight = SCREEN_WIDTH / imageAspectRatio;
+
+      // Clamp between min and max
+      return Math.max(MIN_HEIGHT, Math.min(MAX_HEIGHT, calculatedHeight));
+    };
+
+    if (!imageLoaded) {
+      return (
+        <View style={[styles.imagePlaceholder, { height: SCREEN_WIDTH }]}>
+          <Text style={styles.loadingText}>Loading image...</Text>
+        </View>
+      );
+    }
+
+    const imageHeight = getOptimalImageHeight();
+
+    return (
+      <View style={styles.imageContainer}>
+        <Image
+          source={{ uri: post.media_url }}
+          style={[
+            styles.feedImage,
+            {
+              height: imageHeight,
+              width: SCREEN_WIDTH,
+            },
+          ]}
+          resizeMode="cover" // Key for Instagram-like display
+          onError={() => setImageError(true)}
+          onLoad={() => console.log("Image loaded successfully")}
+        />
+      </View>
+    );
+  };
 
   const renderPost = ({ item: post }: any) => (
     <View style={styles.userPost}>
@@ -230,11 +284,7 @@ export default function HomeScreen() {
             <CustomText variant="inter" style={styles.postContent}>
               {post.description}
             </CustomText>
-            <Image
-              source={{ uri: post.media_url }}
-              style={styles.postImage}
-              resizeMode="cover"
-            />
+            <InstagramLikeFeedItem post={post} />
           </View>
         )}
 
@@ -280,6 +330,50 @@ export default function HomeScreen() {
     },
   ];
 
+  const handleAddPostClick = async () => {
+    const isConsentGiven = await AsyncStorage.getItem("consent");
+    if (isConsentGiven === "Y") {
+      setShowPostModal(true);
+    } else {
+      setIsConsentModal(true);
+      Toast.show({
+        type: "info",
+        text1: "Please accept this EULA agreement in order to post something.",
+      });
+    }
+  };
+
+  const onConsentClick = async (consent: string) => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+
+      const { data } = await axiosInstance.post(
+        baseUrl + "/update-agree",
+        {
+          user_agree: consent,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      await AsyncStorage.setItem("consent", consent);
+      setIsConsentModal(false);
+      if (consent === "Y") {
+        setShowPostModal(true);
+      }
+    } catch (error) {
+      console.log("Error submitting consent:", JSON.stringify(error));
+    }
+  };
+
+  useEffect(() => {
+    fetchUserDetailsFromLocalStorage();
+    fetchPosts();
+    fetchEvents();
+  }, []);
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -296,7 +390,7 @@ export default function HomeScreen() {
             {/* Featured Event Card */}
             <View style={styles.featuredCard}>
               <Carousel
-                width={screnWidth / 1.1}
+                width={SCREEN_WIDTH / 1.1}
                 height={200}
                 data={dummyBanners}
                 // data={featuredEvents}
@@ -425,10 +519,7 @@ export default function HomeScreen() {
       />
 
       {/* Floating Action Button */}
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => setShowPostModal(true)}
-      >
+      <TouchableOpacity style={styles.fab} onPress={handleAddPostClick}>
         <Plus size={28} color="white" />
       </TouchableOpacity>
 
@@ -445,6 +536,11 @@ export default function HomeScreen() {
         showPostModal={showFlagModal}
         setShowPostModal={setShowFlagModal}
         onFlagSubmit={handleFlagSubmit}
+      />
+      <PostConsentModal
+        setShowPostModal={setIsConsentModal}
+        showPostModal={isConsentModal}
+        handleConsent={onConsentClick}
       />
     </View>
   );
@@ -476,7 +572,7 @@ const styles = StyleSheet.create({
     // shadowRadius: 8,
     // elevation: 8,
     height: 250,
-    width: screnWidth / 1.1,
+    width: SCREEN_WIDTH / 1.1,
   },
   featuredContent: {
     flex: 1,
@@ -614,13 +710,29 @@ const styles = StyleSheet.create({
   },
   postImage: {
     width: "100%",
-    height: 200,
+    height: "100%",
   },
   postVideo: {
     width: "100%",
     height: 200,
   },
-
+  imageContainer: {
+    width: SCREEN_WIDTH,
+    alignSelf: "center",
+  },
+  feedImage: {
+    backgroundColor: "#f5f5f5", // Loading background
+  },
+  imagePlaceholder: {
+    backgroundColor: "#f5f5f5",
+    justifyContent: "center",
+    alignItems: "center",
+    width: SCREEN_WIDTH,
+  },
+  loadingText: {
+    color: "#999",
+    fontSize: 14,
+  },
   fab: {
     position: "absolute",
     bottom: 10,

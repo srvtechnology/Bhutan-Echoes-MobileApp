@@ -15,6 +15,7 @@ import { baseUrl } from "@/config";
 import Toast from "react-native-toast-message";
 import { router } from "expo-router";
 import { MoveLeft } from "lucide-react-native";
+import axiosInstance from "@/helpers/axiosInstance";
 
 export default function EditProfile() {
   const [name, setName] = useState("");
@@ -25,7 +26,7 @@ export default function EditProfile() {
     setIsLoading(true);
     try {
       const token = await AsyncStorage.getItem("token");
-      const { data } = await axios.get(baseUrl + "/profile", {
+      const { data } = await axiosInstance.get(baseUrl + "/profile", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -47,13 +48,19 @@ export default function EditProfile() {
       formdata.append("name", name);
       formdata.append("email", email);
 
-      const { data } = await axios.post(baseUrl + "/profile", formdata, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          // "Content-Type": "application/json",
-          "Content-Type": "multipart/form-data",
+      const { data } = await axiosInstance.post(
+        `${baseUrl}/profile`,
+        {
+          name,
+          // email,
         },
-      });
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
       const updatedUser = {
         ...data.user,
@@ -67,7 +74,7 @@ export default function EditProfile() {
       });
       router.replace("/(tabs)/profile");
     } catch (error) {
-      console.log("Error fetching user:", error);
+      console.log("Error updating user:", error);
     }
   };
 
@@ -106,8 +113,9 @@ export default function EditProfile() {
         />
         <Text style={styles.formLabel}>Email</Text>
         <TextInput
+          editable={false}
           placeholder="Email"
-          style={styles.input}
+          style={[styles.input, { color: "#888" }]}
           keyboardType="email-address"
           value={email}
           onChangeText={(text) => setEmail(text)}

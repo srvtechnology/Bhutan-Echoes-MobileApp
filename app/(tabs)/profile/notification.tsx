@@ -9,12 +9,12 @@ import {
   Platform,
 } from "react-native";
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { baseUrl } from "@/config";
 import Toast from "react-native-toast-message";
 import { router } from "expo-router";
 import { MoveLeft } from "lucide-react-native";
+import axiosInstance from "@/helpers/axiosInstance";
 
 export default function EditProfile() {
   const [name, setName] = useState("");
@@ -24,7 +24,7 @@ export default function EditProfile() {
   const fetchUser = async () => {
     try {
       const token = await AsyncStorage.getItem("token");
-      const { data } = await axios.get(baseUrl + "/profile", {
+      const { data } = await axiosInstance.get(baseUrl + "/profile", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -39,7 +39,7 @@ export default function EditProfile() {
   const handleSubmit = async () => {
     try {
       const token = await AsyncStorage.getItem("token");
-      const { data } = await axios.put(
+      const { data } = await axiosInstance.put(
         baseUrl + "/profile-info-update",
         {
           name,

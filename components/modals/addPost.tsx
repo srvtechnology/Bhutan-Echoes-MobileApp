@@ -8,6 +8,7 @@ import {
   Modal,
   TextInput,
   Image,
+  Platform,
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import * as ImagePicker from "expo-image-picker";
@@ -17,6 +18,7 @@ import Toast from "react-native-toast-message";
 import { SafeAreaView, SafeAreaProvider } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import * as ImageManipulator from "expo-image-manipulator";
 
 interface Props {
   showPostModal: boolean;
@@ -53,17 +55,70 @@ const AddPost: React.FC<Props> = ({
     fetchUser();
   }, []);
 
+  const cropToAspectRatio = async (imageAsset, [aspectX, aspectY]) => {
+    try {
+      const { width, height, uri } = imageAsset;
+      const targetAspect = aspectX / aspectY;
+      const currentAspect = width / height;
+
+      let cropWidth, cropHeight, originX, originY;
+
+      if (currentAspect > targetAspect) {
+        // Image is wider than target aspect
+        cropHeight = height;
+        cropWidth = height * targetAspect;
+        originX = (width - cropWidth) / 2;
+        originY = 0;
+      } else {
+        // Image is taller than target aspect
+        cropWidth = width;
+        cropHeight = width / targetAspect;
+        originX = 0;
+        originY = (height - cropHeight) / 2;
+      }
+
+      const manipulatedImage = await ImageManipulator.manipulateAsync(
+        uri,
+        [
+          {
+            crop: {
+              originX,
+              originY,
+              width: cropWidth,
+              height: cropHeight,
+            },
+          },
+        ],
+        {
+          compress: 0.8,
+          format: ImageManipulator.SaveFormat.JPEG,
+        }
+      );
+
+      return {
+        ...imageAsset,
+        ...manipulatedImage,
+      };
+    } catch (error) {
+      console.error("Error cropping to aspect ratio:", error);
+      return imageAsset;
+    }
+  };
+
   const pickAttachment = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.All, // allows image + video
       allowsEditing: true,
-      quality: 1,
+      quality: 0.8,
+      aspect: [1, 1],
     });
 
-    console.log("result", result);
+    // console.log("result:", result);
 
     if (!result.cancelled) {
-      const fileSize = result.assets[0].fileSize;
+      let finalImage = result.assets[0];
+
+      const fileSize = finalImage.fileSize || 0;
       const fileSizeInMB = fileSize / (1024 * 1024);
 
       if (fileSizeInMB > 10) {
@@ -73,11 +128,14 @@ const AddPost: React.FC<Props> = ({
         });
         return;
       }
+      if (Platform.OS === "ios") {
+        finalImage = await cropToAspectRatio(finalImage, [1, 1]);
+      }
       setAttachment({
-        uri: result.assets[0].uri,
-        fileType: result.assets[0].type || "image",
-        type: result.assets[0].mimeType || "image/jpeg",
-        name: result.assets[0].fileName || "image.jpg",
+        uri: finalImage.uri,
+        fileType: finalImage.type || "image",
+        type: finalImage.mimeType || "image/jpeg",
+        name: finalImage.fileName || "image.jpg",
       });
     }
   };
@@ -163,6 +221,7 @@ const AddPost: React.FC<Props> = ({
                 <TextInput
                   style={styles.postInput}
                   placeholder="Write something! (Like Poems, Photos, Story...)"
+                  placeholderTextColor={"#888"}
                   multiline
                   value={postText}
                   onChangeText={setPostText}

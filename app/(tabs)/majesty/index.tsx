@@ -14,10 +14,10 @@ import {
 import { Play, UserCircle2 } from "lucide-react-native";
 import Header from "@/components/header";
 import { Video } from "expo-av";
-import axios from "axios";
 import { baseUrl, mediaUrl } from "@/config";
 import { router } from "expo-router";
 import MajestyAudio from "@/components/MajestyAudio";
+import axiosInstance from "@/helpers/axiosInstance";
 
 const { width: screenWidth } = Dimensions.get("window");
 
@@ -70,7 +70,7 @@ export default function MajestyTimelineScreen() {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const response = await axios.get(`${baseUrl}/all-media`);
+      const response = await axiosInstance.get(`${baseUrl}/all-media`);
       // console.log("Majesty response", response.data);
 
       const mediaList = response?.data?.all_medias || [];

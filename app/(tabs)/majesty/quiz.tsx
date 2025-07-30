@@ -1,7 +1,7 @@
 import Header from "@/components/header";
 import QuizSectionMajesty from "@/components/QuizSectionMajesty";
 import { baseUrl } from "@/config";
-import axios from "axios";
+import axiosInstance from "@/helpers/axiosInstance";
 import { useLocalSearchParams } from "expo-router";
 import React, { use, useEffect, useState } from "react";
 import {
@@ -54,7 +54,7 @@ export default function Quiz() {
   const fetchQuizeDetails = async () => {
     setIsQuizLoading(true);
     try {
-      const { data } = await axios.get(baseUrl + "/quizzes/" + id);
+      const { data } = await axiosInstance.get(baseUrl + "/quizzes/" + id);
       console.log("Quize details: ", data.quiz);
       setQuize(data.quiz);
       setIsQuizLoading(false);

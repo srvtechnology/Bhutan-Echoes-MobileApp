@@ -29,9 +29,9 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Toast from "react-native-toast-message";
 import { baseUrl } from "@/config";
-import axios from "axios";
 import { router } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
+import axiosInstance from "@/helpers/axiosInstance";
 
 interface ProfileData {
   name: string;
@@ -56,7 +56,7 @@ export default function ProfileScreen() {
 
   const handleDeleteAccount = async () => {
     try {
-      const response = await axios.post(baseUrl + "/delete-account", {
+      const response = await axiosInstance.post(baseUrl + "/delete-account", {
         password: "",
       });
       await AsyncStorage.removeItem("token");
@@ -93,13 +93,13 @@ export default function ProfileScreen() {
       color: "#48732C",
       onPress: () => router.push("/(tabs)/profile/editProfile"),
     },
-    {
-      id: "notifications",
-      title: "Notification Setting",
-      icon: Bell,
-      color: "#48732C",
-      onPress: () => router.push("/(tabs)/profile/notification"),
-    },
+    // {
+    //   id: "notifications",
+    //   title: "Notification Setting",
+    //   icon: Bell,
+    //   color: "#48732C",
+    //   onPress: () => router.push("/(tabs)/profile/notification"),
+    // },
     {
       id: "password",
       title: "Change Password",
@@ -148,7 +148,7 @@ export default function ProfileScreen() {
     setIsLoading(true);
     try {
       const token = await AsyncStorage.getItem("token");
-      const { data } = await axios.get(baseUrl + "/profile", {
+      const { data } = await axiosInstance.get(baseUrl + "/profile", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -178,13 +178,17 @@ export default function ProfileScreen() {
       const formData = new FormData();
       formData.append("user_image", image);
 
-      const { data } = await axios.post(baseUrl + "/profile", formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data",
-          Accept: "application/json",
-        },
-      });
+      const { data } = await axiosInstance.post(
+        baseUrl + "/profile",
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+            Accept: "application/json",
+          },
+        }
+      );
 
       // console.log("Profile image res:", data);
 

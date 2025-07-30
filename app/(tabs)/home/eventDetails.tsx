@@ -21,12 +21,12 @@ import Header from "@/components/header";
 import { Video } from "expo-av";
 import QuizResult from "@/components/modals/quizResult";
 import { baseUrl } from "@/config";
-import axios from "axios";
 import AddQuestion from "@/components/modals/addQuestion";
 import { useLocalSearchParams } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Toast from "react-native-toast-message";
 import WebView from "react-native-webview";
+import axiosInstance from "@/helpers/axiosInstance";
 
 export default function EventDetailsScreen() {
   const [showRatingModal, setShowRatingModal] = useState(false);
@@ -71,7 +71,9 @@ export default function EventDetailsScreen() {
   const fetchLiveSessionDetails = async () => {
     setIsLoading(true);
     try {
-      const { data } = await axios.get(baseUrl + "/live-sessions/" + id);
+      const { data } = await axiosInstance.get(
+        baseUrl + "/live-sessions/" + id
+      );
       // console.log("Session details", id, data.live_session);
       const constructedEmbedUrl = getYouTubeEmbedUrl(
         data.live_session?.youtube_link
@@ -92,7 +94,7 @@ export default function EventDetailsScreen() {
     setIsQuizLoading(true);
     try {
       const token = await AsyncStorage.getItem("token");
-      const { data } = await axios.get(
+      const { data } = await axiosInstance.get(
         baseUrl + "/live-quizzes?session_id=" + id,
         {
           headers: {
@@ -113,7 +115,7 @@ export default function EventDetailsScreen() {
     setIsPollsLoading(true);
     try {
       const token = await AsyncStorage.getItem("token");
-      const { data } = await axios.get(
+      const { data } = await axiosInstance.get(
         baseUrl + "/live-polls?session_id=" + id,
         {
           headers: {
@@ -134,11 +136,14 @@ export default function EventDetailsScreen() {
     setIsCommentsLoading(true);
     try {
       const token = await AsyncStorage.getItem("token");
-      const { data } = await axios.get(baseUrl + "/feedback?session_id=" + id, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const { data } = await axiosInstance.get(
+        baseUrl + "/feedback?session_id=" + id,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       // console.log("Comments==", data);
       setComments(data.feedback);
       setIsCommentsLoading(false);
@@ -158,7 +163,7 @@ export default function EventDetailsScreen() {
     };
     try {
       const token = await AsyncStorage.getItem("token");
-      const { data } = await axios.post(
+      const { data } = await axiosInstance.post(
         baseUrl + "/feedback",
         {
           session_id: liveSessionDetails?.id,
@@ -206,7 +211,7 @@ export default function EventDetailsScreen() {
   const handleSubmitQuestion = async (question: any) => {
     try {
       const token = await AsyncStorage.getItem("token");
-      const { data } = await axios.post(
+      const { data } = await axiosInstance.post(
         baseUrl + "/live-questions",
         {
           session_id: liveSessionDetails?.id,

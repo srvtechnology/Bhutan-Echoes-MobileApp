@@ -84,6 +84,7 @@ export default function RatingModal({
               <TextInput
                 style={styles.commentInput}
                 placeholder="Write your comments"
+                placeholderTextColor={"#888"}
                 multiline
                 value={comment}
                 onChangeText={setComment}

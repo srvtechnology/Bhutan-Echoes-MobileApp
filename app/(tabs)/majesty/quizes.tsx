@@ -9,11 +9,11 @@ import {
   ActivityIndicator,
 } from "react-native";
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import { baseUrl } from "@/config";
 import Header from "@/components/header";
 import { ChevronRight } from "lucide-react-native";
 import { router } from "expo-router";
+import axiosInstance from "@/helpers/axiosInstance";
 
 export default function Quizes() {
   const [quizes, setQuizes] = useState([]);
@@ -22,7 +22,7 @@ export default function Quizes() {
   const fetchQuizes = async () => {
     setIsQuizLoading(true);
     try {
-      const { data } = await axios.get(baseUrl + "/quizzes");
+      const { data } = await axiosInstance.get(baseUrl + "/quizzes");
       console.log("Quizes", data.quizzes);
       setQuizes(data.quizzes);
       setIsQuizLoading(false);

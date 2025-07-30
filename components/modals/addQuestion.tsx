@@ -101,6 +101,7 @@ const AddQuestion: React.FC<Props> = ({
             <TextInput
               style={styles.postInput}
               placeholder="Post your question"
+              placeholderTextColor={"#888"}
               multiline
               value={postText}
               onChangeText={setPostText}

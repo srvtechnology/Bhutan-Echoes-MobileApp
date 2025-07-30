@@ -11,10 +11,10 @@ import {
 import { Bell, Calendar, MapPin, Users, Clock } from "lucide-react-native";
 import Header from "@/components/header";
 import { SafeAreaView } from "react-native-safe-area-context";
-import axios from "axios";
 import { baseUrl } from "@/config";
 import { useLocalSearchParams } from "expo-router";
 import RenderHtml from "react-native-render-html";
+import axiosInstance from "@/helpers/axiosInstance";
 
 const { width: screenWidth } = Dimensions.get("window");
 
@@ -56,7 +56,7 @@ The primary objective of the camp was to encourage voluntary blood donation, rai
 
   const fetchEventDetails = async () => {
     try {
-      const { data } = await axios.get(`${baseUrl}/events/${id}`);
+      const { data } = await axiosInstance.get(`${baseUrl}/events/${id}`);
       console.log("Event details:", data);
       setEventDetails(data.event);
     } catch (error) {

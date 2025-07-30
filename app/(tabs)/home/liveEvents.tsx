@@ -13,10 +13,10 @@ import { useState, useEffect, useCallback } from "react";
 import Header from "@/components/header";
 import { router } from "expo-router";
 import { Search } from "lucide-react-native";
-import axios from "axios";
 import { baseUrl } from "@/config";
 import { showToast } from "@/components/ToastHelper";
 import moment from "moment";
+import axiosInstance from "@/helpers/axiosInstance";
 
 export default function LiveEvents() {
   const [events, setEvents] = useState([]);
@@ -31,7 +31,7 @@ export default function LiveEvents() {
   const fetchPosts = async () => {
     setLoading(true);
     try {
-      const { data } = await axios.get(baseUrl + "/live-sessions");
+      const { data } = await axiosInstance.get(baseUrl + "/live-sessions");
       console.log("Events:", data);
 
       setEvents(data.live_sessions);
