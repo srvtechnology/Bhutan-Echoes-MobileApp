@@ -40,6 +40,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.srv.bhutanechos",
       "infoPlist": {
+        "UIBackgroundModes": [],
         "NSPhotoLibraryUsageDescription": "This app needs access to photo library to save downloaded files.",
         "NSPhotoLibraryAddUsageDescription": "This app needs access to photo library to save downloaded files.",
         "NSMicrophoneUsageDescription": "This app needs access to microphone for audio ,features.",
