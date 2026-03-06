@@ -21,12 +21,12 @@ export default function TabLayout() {
         },
         tabBarActiveTintColor: "#48732C",
         tabBarInactiveTintColor: "#8E8E93",
-        // tabBarShowLabel: false,
+        tabBarShowLabel: false,
         tabBarIconStyle: { height: 40 },
       }}
     >
       <Tabs.Screen
-				name="home"
+				name="Home"
 				options={{
 					headerShown: false,
 					tabBarIcon: ({ color, size }) => (
@@ -42,7 +42,7 @@ export default function TabLayout() {
 					tabBarIcon: ({ color, size }) => (
 						<Calendar width={size} height={size} color={color} />
 					),
-					tabBarLabel: "My Schedule",
+					tabBarLabel: "Schedule",
 				}}
 			/>
 			<Tabs.Screen

@@ -1,0 +1,487 @@
+import React, { useState, useEffect, useCallback } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  SafeAreaView,
+  TouchableOpacity,
+  Image,
+  ActivityIndicator,
+  RefreshControl,
+} from "react-native";
+import { Bell, Plus, Star } from "lucide-react-native";
+import VideoPlayer from "@/components/VideoPlayer";
+import StarRating from "@/components/StarRating";
+import QuizSection from "@/components/QuizSection";
+import RatingModal from "@/components/RatingModal";
+import CommentsList, { Comment } from "@/components/CommentsList";
+import PollSection from "@/components/PollSection";
+import Header from "@/components/header";
+import { Video } from "expo-av";
+import QuizResult from "@/components/modals/quizResult";
+import { baseUrl } from "@/config";
+import AddQuestion from "@/components/modals/addQuestion";
+import { useLocalSearchParams } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import Toast from "react-native-toast-message";
+import WebView from "react-native-webview";
+import axiosInstance from "@/helpers/axiosInstance";
+
+export default function EventDetailsScreen() {
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [quizScore, setQuizScore] = useState<any>({});
+  const [showQuizResultModal, setShowQuizResultModal] = useState(false);
+  const [eventRating, setEventRating] = useState(4.2);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isQuizLoading, setIsQuizLoading] = useState(true);
+  const [quizes, setQuizes] = useState([]);
+  const [isCommentsLoading, setIsCommentsLoading] = useState(true);
+  const [isPollsLoading, setIsPollsLoading] = useState(true);
+  const [polls, setPolls] = useState([]);
+  const [showAddQuestionModal, setShowAddQuestionModal] = useState(false);
+  const [comments, setComments] = useState<Comment[]>();
+  const [liveSessionDetails, setLiveSessionDetails] = useState("");
+  const [userDetails, setUserDetails] = useState({});
+  const [refreshing, setRefreshing] = useState(false);
+
+  const { id } = useLocalSearchParams();
+
+  const fetchUserFromAsync = async () => {
+    try {
+      const user = await AsyncStorage.getItem("user");
+      // console.log("user", user);
+      setUserDetails(JSON.parse(user));
+    } catch (error) {
+      console.log("Error fetching user:", error);
+    }
+  };
+  const getYouTubeEmbedUrl = (url) => {
+    const regex =
+      /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/|live\/|.*[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+    const match = url.match(regex);
+
+    if (match && match[1]) {
+      return `https://www.youtube.com/embed/${match[1]}?autoplay=0&controls=1`;
+    } else {
+      return null;
+    }
+  };
+
+  const fetchLiveSessionDetails = async () => {
+    setIsLoading(true);
+    try {
+      const { data } = await axiosInstance.get(
+        baseUrl + "/live-sessions/" + id
+      );
+      // console.log("Session details", id, data.live_session);
+      const constructedEmbedUrl = getYouTubeEmbedUrl(
+        data.live_session?.youtube_link
+      );
+      if (constructedEmbedUrl) {
+        data.live_session.youtube_link = constructedEmbedUrl;
+      }
+
+      setLiveSessionDetails(data.live_session);
+      setEventRating(data.live_session.avgFeedback);
+      setIsLoading(false);
+    } catch (error) {
+      console.log("Error fetching Session details:", error);
+      setIsLoading(false);
+    }
+  };
+  const fetchQuizes = async () => {
+    setIsQuizLoading(true);
+    try {
+      const token = await AsyncStorage.getItem("token");
+      const { data } = await axiosInstance.get(
+        baseUrl + "/live-quizzes?session_id=" + id,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      // console.log("Quizes", data.live_quizzes);
+      setQuizes(data.live_quizzes);
+      setIsQuizLoading(false);
+    } catch (error) {
+      console.log("Error fetching quizes:", error);
+      setIsQuizLoading(false);
+    }
+  };
+
+  const fetchPolls = async () => {
+    setIsPollsLoading(true);
+    try {
+      const token = await AsyncStorage.getItem("token");
+      const { data } = await axiosInstance.get(
+        baseUrl + "/live-polls?session_id=" + id,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      // console.log("polls===== ", data.live_polls);
+      setPolls(data.live_polls);
+      setIsPollsLoading(false);
+    } catch (error) {
+      console.log("Error fetching polls :", error);
+      setIsPollsLoading(false);
+    }
+  };
+
+  const fetchComments = async () => {
+    setIsCommentsLoading(true);
+    try {
+      const token = await AsyncStorage.getItem("token");
+      const { data } = await axiosInstance.get(
+        baseUrl + "/feedback?session_id=" + id,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      // console.log("Comments==", data);
+      setComments(data.feedback);
+      setIsCommentsLoading(false);
+    } catch (error) {
+      console.log("Error fetching Session details:", error);
+      setIsCommentsLoading(false);
+    }
+  };
+
+  const handleRatingSubmit = async (rating: number, comment: string) => {
+    const newComment: Comment = {
+      id: Date.now().toString(),
+      userName: "Tshering",
+      rating,
+      comment,
+      timestamp: new Date(),
+    };
+    try {
+      const token = await AsyncStorage.getItem("token");
+      const { data } = await axiosInstance.post(
+        baseUrl + "/feedback",
+        {
+          session_id: liveSessionDetails?.id,
+          rating,
+          comment,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      // console.log("Rating submitted:", data);
+      Toast.show({
+        type: "success",
+        text1: data.message,
+      });
+      const commentData = { ...data.feedback, user: userDetails };
+
+      setComments((prev) => [commentData, ...prev]);
+    } catch (error) {
+      console.log("Error submitting rating:", error);
+      Toast.show({
+        type: "error",
+        text1: "Error submitting rating. Please try again.",
+      });
+    }
+
+    // Update overall event rating (simple average)
+    const totalRating = comments.reduce((sum, c) => sum + c.rating, 0) + rating;
+    const newEventRating = totalRating / (comments.length + 1);
+    setEventRating(Number(newEventRating.toFixed(1)));
+  };
+
+  const handleQuizComplete = (score: number) => {
+    setQuizScore(score);
+    setShowQuizResultModal(true);
+  };
+
+  const handlePollVote = (pollId: string, optionId: string) => {
+    console.log("Poll vote:", pollId, optionId);
+  };
+
+  const handleSubmitQuestion = async (question: any) => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      const { data } = await axiosInstance.post(
+        baseUrl + "/live-questions",
+        {
+          session_id: liveSessionDetails?.id,
+          question: question?.question,
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      console.log("Question submitted:", data);
+      Toast.show({
+        type: "success",
+        text1: data.message,
+      });
+    } catch (error) {
+      console.log("Error submitting question:", error);
+      Toast.show({
+        type: "error",
+        text1: "Error submitting question. Please try again.",
+      });
+    }
+  };
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    Promise.all([
+      fetchUserFromAsync(),
+      fetchLiveSessionDetails(),
+      fetchQuizes(),
+      fetchPolls(),
+      fetchComments(),
+    ]).finally(() => setRefreshing(false));
+  }, []);
+
+  useEffect(() => {
+    fetchUserFromAsync();
+    fetchLiveSessionDetails();
+    fetchQuizes();
+    fetchPolls();
+    fetchComments();
+  }, []);
+
+  if (isLoading && !refreshing) {
+    return (
+      <View style={styles.indicatorContainer}>
+        <ActivityIndicator color={"#48732C"} size={"large"} />
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      {/* Header */}
+      <Header title={liveSessionDetails?.title || "Event Title"} />
+      {refreshing ||
+        (isLoading && (
+          <View style={{ alignItems: "center", paddingTop: 20 }}>
+            <ActivityIndicator size="large" color="#48732C" />
+          </View>
+        ))}
+      <ScrollView
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
+        <View style={styles.ratingContainer}>
+          <Text style={styles.ratingLabel}>Event Rating</Text>
+          <StarRating rating={Math.floor(eventRating)} readonly size={20} />
+        </View>
+        {/* Video Player */}
+
+        <View style={styles.videoSection}>
+          <WebView
+            style={{ flex: 1, height: 200, width: "100%" }}
+            source={{ uri: liveSessionDetails?.youtube_link || "" }}
+            scalesPageToFit
+            javaScriptEnabled
+          />
+
+          {/* {liveSessionDetails?.youtube_link &&
+          liveSessionDetails?.youtube_link.incudes("youtube") ? (
+            <WebView
+              style={{ flex: 1, height: 200, width: "100%" }}
+              source={{ uri: liveSessionDetails?.youtube_link }}
+              scalesPageToFit
+              javaScriptEnabled
+            />
+          ) : (
+            <VideoPlayer url={liveSessionDetails?.youtube_link || ""} />
+          )} */}
+        </View>
+
+        {/* Quiz Section */}
+        {!isQuizLoading &&
+          quizes?.length > 0 &&
+          quizes?.map(
+            (question: any) =>
+              question.questions?.length > 0 && (
+                <QuizSection
+                  isLoading={isQuizLoading}
+                  questions={question.questions}
+                  onQuizComplete={handleQuizComplete}
+                />
+              )
+          )}
+
+        {/* Poll Section */}
+        {!isPollsLoading && polls?.length > 0 && (
+          <PollSection
+            poll={polls}
+            onVote={handlePollVote}
+            isLoading={isPollsLoading}
+          />
+        )}
+
+        {/* Comments List */}
+        {!isCommentsLoading && comments?.length > 0 && (
+          <CommentsList comments={comments} isLoading={isCommentsLoading} />
+        )}
+
+        {/* Bottom Spacing */}
+        <View style={styles.bottomSpacing} />
+      </ScrollView>
+
+      {/* Rating Button */}
+      <View style={styles.ratingButtonSection}>
+        <View style={styles.fabContainer}>
+          <TouchableOpacity
+            style={styles.fab}
+            onPress={() => setShowAddQuestionModal(true)}
+          >
+            <Plus size={22} color="#fff" />
+          </TouchableOpacity>
+          <Text style={styles.fabText}>Have Questions?</Text>
+        </View>
+
+        <TouchableOpacity
+          style={styles.ratingButton}
+          onPress={() => setShowRatingModal(true)}
+        >
+          <Text style={styles.ratingButtonText}>
+            Give your comments for this event
+          </Text>
+          <Star size={22} color="#FFD700" fill={"#FFD700"} />
+        </TouchableOpacity>
+      </View>
+
+      {/* Rating Modal */}
+      <RatingModal
+        visible={showRatingModal}
+        onClose={() => setShowRatingModal(false)}
+        onSubmit={handleRatingSubmit}
+        user={userDetails}
+      />
+      <QuizResult
+        showPostModal={showQuizResultModal}
+        setShowPostModal={setShowQuizResultModal}
+        score={quizScore}
+      />
+      {showAddQuestionModal && (
+        <AddQuestion
+          showPostModal={showAddQuestionModal}
+          setShowPostModal={setShowAddQuestionModal}
+          onSubmitQuestion={handleSubmitQuestion}
+        />
+      )}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  indicatorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#fff",
+  },
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+  },
+  scrollView: {
+    flex: 1,
+    paddingTop: 20,
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    backgroundColor: "white",
+  },
+  headerContent: {
+    flex: 1,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#48732C",
+    marginBottom: 8,
+    lineHeight: 24,
+  },
+  ratingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
+  ratingLabel: {
+    fontSize: 14,
+    color: "#000",
+    marginRight: 8,
+    fontFamily: "inter",
+  },
+  videoSection: {
+    paddingHorizontal: 20,
+    paddingTop: 15,
+  },
+  ratingButtonSection: {
+    paddingHorizontal: 20,
+    paddingBottom: 10,
+    marginTop: 20,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  ratingButton: {
+    backgroundColor: "#dddddd",
+    paddingVertical: 16,
+    borderRadius: 14,
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+  },
+  ratingButtonText: {
+    color: "#666",
+    fontSize: 15,
+    fontFamily: "inter",
+    fontStyle: "italic",
+  },
+  bottomSpacing: {
+    height: 100,
+  },
+  fabContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  fab: {
+    width: 38,
+    height: 38,
+    borderRadius: 28,
+    backgroundColor: "#48732C",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  fabText: {
+    fontSize: 8,
+    fontFamily: "inter",
+    color: "#000",
+    marginTop: 6,
+  },
+});

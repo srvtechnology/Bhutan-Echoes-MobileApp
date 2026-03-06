@@ -1,487 +1,482 @@
-import React, { useState, useEffect, useCallback } from "react";
+"use client";
+import React, { useEffect } from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  SafeAreaView,
-  TouchableOpacity,
-  Image,
-  ActivityIndicator,
-  RefreshControl,
+	View,
+	ScrollView,
+	Text,
+	TouchableOpacity,
+	Image,
+	FlatList,
+	useWindowDimensions,
 } from "react-native";
-import { Bell, Plus, Star } from "lucide-react-native";
-import VideoPlayer from "@/components/VideoPlayer";
-import StarRating from "@/components/StarRating";
-import QuizSection from "@/components/QuizSection";
-import RatingModal from "@/components/RatingModal";
-import CommentsList, { Comment } from "@/components/CommentsList";
-import PollSection from "@/components/PollSection";
-import Header from "@/components/header";
-import { Video } from "expo-av";
-import QuizResult from "@/components/modals/quizResult";
-import { baseUrl } from "@/config";
-import AddQuestion from "@/components/modals/addQuestion";
-import { useLocalSearchParams } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import Toast from "react-native-toast-message";
-import WebView from "react-native-webview";
-import axiosInstance from "@/helpers/axiosInstance";
+import { useEventStore } from "../../../store/eventStore";
 
-export default function EventDetailsScreen() {
-  const [showRatingModal, setShowRatingModal] = useState(false);
-  const [quizScore, setQuizScore] = useState<any>({});
-  const [showQuizResultModal, setShowQuizResultModal] = useState(false);
-  const [eventRating, setEventRating] = useState(4.2);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isQuizLoading, setIsQuizLoading] = useState(true);
-  const [quizes, setQuizes] = useState([]);
-  const [isCommentsLoading, setIsCommentsLoading] = useState(true);
-  const [isPollsLoading, setIsPollsLoading] = useState(true);
-  const [polls, setPolls] = useState([]);
-  const [showAddQuestionModal, setShowAddQuestionModal] = useState(false);
-  const [comments, setComments] = useState<Comment[]>();
-  const [liveSessionDetails, setLiveSessionDetails] = useState("");
-  const [userDetails, setUserDetails] = useState({});
-  const [refreshing, setRefreshing] = useState(false);
 
-  const { id } = useLocalSearchParams();
+const HomeScreen = ({ navigation }: any) => {
+	  const theme = {
+    colors: {
+	// Primary colors
+	primary: "#33B564", // Vibrant Green (Bhutan Echoes theme)
+	secondary: "#86EFAC", // Light Green
+	tertiary: "#16A34A", // Dark Green
 
-  const fetchUserFromAsync = async () => {
-    try {
-      const user = await AsyncStorage.getItem("user");
-      // console.log("user", user);
-      setUserDetails(JSON.parse(user));
-    } catch (error) {
-      console.log("Error fetching user:", error);
-    }
-  };
-  const getYouTubeEmbedUrl = (url) => {
-    const regex =
-      /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/|live\/|.*[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
-    const match = url.match(regex);
+	// Neutrals - Cream and off-white theme
+	white: "#FAFAF8",
+	cream: "#F5F5F3",
+	gray50: "#F9F8F6",
+	gray100: "#EFE9E6",
+	gray200: "#E6DDD8",
+	gray300: "#D4C8C0",
+	gray400: "#B8A8A0",
+	gray500: "#8F8F8F",
+	gray600: "#6B6B6B",
+	gray700: "#4D4D4D",
+	gray800: "#2D2D2D",
+	gray900: "#1A1A1A",
+	black: "#000000",
 
-    if (match && match[1]) {
-      return `https://www.youtube.com/embed/${match[1]}?autoplay=0&controls=1`;
-    } else {
-      return null;
-    }
-  };
-
-  const fetchLiveSessionDetails = async () => {
-    setIsLoading(true);
-    try {
-      const { data } = await axiosInstance.get(
-        baseUrl + "/live-sessions/" + id
-      );
-      // console.log("Session details", id, data.live_session);
-      const constructedEmbedUrl = getYouTubeEmbedUrl(
-        data.live_session?.youtube_link
-      );
-      if (constructedEmbedUrl) {
-        data.live_session.youtube_link = constructedEmbedUrl;
-      }
-
-      setLiveSessionDetails(data.live_session);
-      setEventRating(data.live_session.avgFeedback);
-      setIsLoading(false);
-    } catch (error) {
-      console.log("Error fetching Session details:", error);
-      setIsLoading(false);
-    }
-  };
-  const fetchQuizes = async () => {
-    setIsQuizLoading(true);
-    try {
-      const token = await AsyncStorage.getItem("token");
-      const { data } = await axiosInstance.get(
-        baseUrl + "/live-quizzes?session_id=" + id,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      // console.log("Quizes", data.live_quizzes);
-      setQuizes(data.live_quizzes);
-      setIsQuizLoading(false);
-    } catch (error) {
-      console.log("Error fetching quizes:", error);
-      setIsQuizLoading(false);
-    }
-  };
-
-  const fetchPolls = async () => {
-    setIsPollsLoading(true);
-    try {
-      const token = await AsyncStorage.getItem("token");
-      const { data } = await axiosInstance.get(
-        baseUrl + "/live-polls?session_id=" + id,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      // console.log("polls===== ", data.live_polls);
-      setPolls(data.live_polls);
-      setIsPollsLoading(false);
-    } catch (error) {
-      console.log("Error fetching polls :", error);
-      setIsPollsLoading(false);
-    }
-  };
-
-  const fetchComments = async () => {
-    setIsCommentsLoading(true);
-    try {
-      const token = await AsyncStorage.getItem("token");
-      const { data } = await axiosInstance.get(
-        baseUrl + "/feedback?session_id=" + id,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      // console.log("Comments==", data);
-      setComments(data.feedback);
-      setIsCommentsLoading(false);
-    } catch (error) {
-      console.log("Error fetching Session details:", error);
-      setIsCommentsLoading(false);
-    }
-  };
-
-  const handleRatingSubmit = async (rating: number, comment: string) => {
-    const newComment: Comment = {
-      id: Date.now().toString(),
-      userName: "Tshering",
-      rating,
-      comment,
-      timestamp: new Date(),
-    };
-    try {
-      const token = await AsyncStorage.getItem("token");
-      const { data } = await axiosInstance.post(
-        baseUrl + "/feedback",
-        {
-          session_id: liveSessionDetails?.id,
-          rating,
-          comment,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      // console.log("Rating submitted:", data);
-      Toast.show({
-        type: "success",
-        text1: data.message,
-      });
-      const commentData = { ...data.feedback, user: userDetails };
-
-      setComments((prev) => [commentData, ...prev]);
-    } catch (error) {
-      console.log("Error submitting rating:", error);
-      Toast.show({
-        type: "error",
-        text1: "Error submitting rating. Please try again.",
-      });
-    }
-
-    // Update overall event rating (simple average)
-    const totalRating = comments.reduce((sum, c) => sum + c.rating, 0) + rating;
-    const newEventRating = totalRating / (comments.length + 1);
-    setEventRating(Number(newEventRating.toFixed(1)));
-  };
-
-  const handleQuizComplete = (score: number) => {
-    setQuizScore(score);
-    setShowQuizResultModal(true);
-  };
-
-  const handlePollVote = (pollId: string, optionId: string) => {
-    console.log("Poll vote:", pollId, optionId);
-  };
-
-  const handleSubmitQuestion = async (question: any) => {
-    try {
-      const token = await AsyncStorage.getItem("token");
-      const { data } = await axiosInstance.post(
-        baseUrl + "/live-questions",
-        {
-          session_id: liveSessionDetails?.id,
-          question: question?.question,
-        },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      console.log("Question submitted:", data);
-      Toast.show({
-        type: "success",
-        text1: data.message,
-      });
-    } catch (error) {
-      console.log("Error submitting question:", error);
-      Toast.show({
-        type: "error",
-        text1: "Error submitting question. Please try again.",
-      });
-    }
-  };
-
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    Promise.all([
-      fetchUserFromAsync(),
-      fetchLiveSessionDetails(),
-      fetchQuizes(),
-      fetchPolls(),
-      fetchComments(),
-    ]).finally(() => setRefreshing(false));
-  }, []);
-
-  useEffect(() => {
-    fetchUserFromAsync();
-    fetchLiveSessionDetails();
-    fetchQuizes();
-    fetchPolls();
-    fetchComments();
-  }, []);
-
-  if (isLoading && !refreshing) {
-    return (
-      <View style={styles.indicatorContainer}>
-        <ActivityIndicator color={"#48732C"} size={"large"} />
-      </View>
-    );
-  }
-
-  return (
-    <View style={styles.container}>
-      {/* Header */}
-      <Header title={liveSessionDetails?.title || "Event Title"} />
-      {refreshing ||
-        (isLoading && (
-          <View style={{ alignItems: "center", paddingTop: 20 }}>
-            <ActivityIndicator size="large" color="#48732C" />
-          </View>
-        ))}
-      <ScrollView
-        style={styles.scrollView}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-      >
-        <View style={styles.ratingContainer}>
-          <Text style={styles.ratingLabel}>Event Rating</Text>
-          <StarRating rating={Math.floor(eventRating)} readonly size={20} />
-        </View>
-        {/* Video Player */}
-
-        <View style={styles.videoSection}>
-          <WebView
-            style={{ flex: 1, height: 200, width: "100%" }}
-            source={{ uri: liveSessionDetails?.youtube_link || "" }}
-            scalesPageToFit
-            javaScriptEnabled
-          />
-
-          {/* {liveSessionDetails?.youtube_link &&
-          liveSessionDetails?.youtube_link.incudes("youtube") ? (
-            <WebView
-              style={{ flex: 1, height: 200, width: "100%" }}
-              source={{ uri: liveSessionDetails?.youtube_link }}
-              scalesPageToFit
-              javaScriptEnabled
-            />
-          ) : (
-            <VideoPlayer url={liveSessionDetails?.youtube_link || ""} />
-          )} */}
-        </View>
-
-        {/* Quiz Section */}
-        {!isQuizLoading &&
-          quizes?.length > 0 &&
-          quizes?.map(
-            (question: any) =>
-              question.questions?.length > 0 && (
-                <QuizSection
-                  isLoading={isQuizLoading}
-                  questions={question.questions}
-                  onQuizComplete={handleQuizComplete}
-                />
-              )
-          )}
-
-        {/* Poll Section */}
-        {!isPollsLoading && polls?.length > 0 && (
-          <PollSection
-            poll={polls}
-            onVote={handlePollVote}
-            isLoading={isPollsLoading}
-          />
-        )}
-
-        {/* Comments List */}
-        {!isCommentsLoading && comments?.length > 0 && (
-          <CommentsList comments={comments} isLoading={isCommentsLoading} />
-        )}
-
-        {/* Bottom Spacing */}
-        <View style={styles.bottomSpacing} />
-      </ScrollView>
-
-      {/* Rating Button */}
-      <View style={styles.ratingButtonSection}>
-        <View style={styles.fabContainer}>
-          <TouchableOpacity
-            style={styles.fab}
-            onPress={() => setShowAddQuestionModal(true)}
-          >
-            <Plus size={22} color="#fff" />
-          </TouchableOpacity>
-          <Text style={styles.fabText}>Have Questions?</Text>
-        </View>
-
-        <TouchableOpacity
-          style={styles.ratingButton}
-          onPress={() => setShowRatingModal(true)}
-        >
-          <Text style={styles.ratingButtonText}>
-            Give your comments for this event
-          </Text>
-          <Star size={22} color="#FFD700" fill={"#FFD700"} />
-        </TouchableOpacity>
-      </View>
-
-      {/* Rating Modal */}
-      <RatingModal
-        visible={showRatingModal}
-        onClose={() => setShowRatingModal(false)}
-        onSubmit={handleRatingSubmit}
-        user={userDetails}
-      />
-      <QuizResult
-        showPostModal={showQuizResultModal}
-        setShowPostModal={setShowQuizResultModal}
-        score={quizScore}
-      />
-      {showAddQuestionModal && (
-        <AddQuestion
-          showPostModal={showAddQuestionModal}
-          setShowPostModal={setShowAddQuestionModal}
-          onSubmitQuestion={handleSubmitQuestion}
-        />
-      )}
-    </View>
-  );
+	// Feedback colors
+	success: "#22C55E", // Green
+	warning: "#F59E0B", // Amber
+	error: "#EF4444", // Red
+	info: "#3B82F6", // Blue
 }
+  }
+	const { events, sponsors, setSelectedEvent, toggleSaveEvent, savedEvents, fetchEvents,
+      fetchSponsors, } =
+      useEventStore();
+    const { width } = useWindowDimensions();
+  
+    useEffect(() => {
+      fetchEvents();
+      fetchSponsors();
+    }, []);
 
-const styles = StyleSheet.create({
-  indicatorContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#fff",
-  },
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  scrollView: {
-    flex: 1,
-    paddingTop: 20,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    backgroundColor: "white",
-  },
-  headerContent: {
-    flex: 1,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#48732C",
-    marginBottom: 8,
-    lineHeight: 24,
-  },
-  ratingContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 20,
-  },
-  ratingLabel: {
-    fontSize: 14,
-    color: "#000",
-    marginRight: 8,
-    fontFamily: "inter",
-  },
-  videoSection: {
-    paddingHorizontal: 20,
-    paddingTop: 15,
-  },
-  ratingButtonSection: {
-    paddingHorizontal: 20,
-    paddingBottom: 10,
-    marginTop: 20,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  ratingButton: {
-    backgroundColor: "#dddddd",
-    paddingVertical: 16,
-    borderRadius: 14,
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-  },
-  ratingButtonText: {
-    color: "#666",
-    fontSize: 15,
-    fontFamily: "inter",
-    fontStyle: "italic",
-  },
-  bottomSpacing: {
-    height: 100,
-  },
-  fabContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  fab: {
-    width: 38,
-    height: 38,
-    borderRadius: 28,
-    backgroundColor: "#48732C",
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  fabText: {
-    fontSize: 8,
-    fontFamily: "inter",
-    color: "#000",
-    marginTop: 6,
-  },
-});
+	const featuredEvent = events.find((e) => e.featured);
+	const upcomingEvents = events;
+
+	const handleEventPress = (event: any) => {
+		setSelectedEvent(event);
+		navigation.navigate("EventDetail");
+	};
+
+	const isSaved = (eventId: string) => savedEvents.includes(eventId);
+
+	return (
+		<ScrollView style={[{ flex: 1, backgroundColor: theme.colors.background }]}>
+			{/* Header */}
+			<View
+				style={{ paddingHorizontal: 16, paddingTop: 40, paddingBottom: 10 }}
+			>
+				<View
+					style={{
+						flexDirection: "column",
+						justifyContent: "space-between",
+						// alignItems: "center",
+					}}
+				>
+					<TouchableOpacity
+						style={{
+							backgroundColor: "#33b564",
+							paddingHorizontal: 24,
+							paddingVertical: 8,
+							borderRadius: 10,
+							alignSelf: "flex-end",
+						}}
+					>
+						<Text style={{ color: "white", fontSize: 12, fontWeight: "600" }}>
+							DONATE
+						</Text>
+					</TouchableOpacity>
+					<View style={{ paddingLeft: 10, paddingTop: 10 }}>
+						<Text
+							style={{
+								fontSize: 28,
+								fontWeight: "700",
+								color: theme.colors.text,
+								marginBottom: 4,
+							}}
+						>
+							2026{" "}
+							<Text style={{ color: theme.colors.text, fontWeight: "500" }}>
+								| Bhutan Echoes
+							</Text>
+						</Text>
+
+						<View style={{ flexDirection: "row", alignItems: "center" }}>
+							<Text
+								style={{
+									fontSize: 12,
+									color: theme.colors.gray600,
+									marginTop: 2,
+									fontWeight: "bold",
+								}}
+							>
+								15 Years
+							</Text>
+							<Text
+								style={{
+									fontSize: 6,
+									marginHorizontal: 6,
+								}}
+							>
+								{`\u25CF`}
+							</Text>
+							<Text
+								style={{
+									fontSize: 12,
+									color: theme.colors.gray600,
+									marginTop: 2,
+									fontWeight: "bold",
+								}}
+							>
+								Drukyul's Literature and Arts Festival
+							</Text>
+						</View>
+					</View>
+				</View>
+			</View>
+
+			{/* Featured Event */}
+			{featuredEvent && (
+				<View
+					style={{
+						marginHorizontal: 16,
+						marginTop: 16,
+						marginBottom: 20,
+						elevation: 8,
+						backgroundColor: "white",
+						borderRadius: 24,
+						shadowColor: theme.colors.gray400,
+						shadowOffset: { width: 0, height: 4 },
+						shadowOpacity: 0.3,
+						shadowRadius: 4.65,
+					}}
+				>
+					<TouchableOpacity onPress={() => handleEventPress(featuredEvent)}>
+						<View
+							style={{
+								backgroundColor: "#e7eedf",
+								borderRadius: 24,
+								padding: 16,
+							}}
+						>
+							<View
+								style={{
+									flexDirection: "row",
+									justifyContent: "space-between",
+								}}
+							>
+								<View style={{ width: "50%" }}>
+									<Text
+										style={{
+											fontSize: 12,
+											color: theme.colors.gray800,
+											fontWeight: "600",
+											paddingBottom: 8,
+										}}
+									>
+										Dialogue
+									</Text>
+									<Text
+										style={{
+											fontSize: 18,
+											fontWeight: "bold",
+											color: theme.colors.text,
+										}}
+									>
+										The Wisdom of Balance:
+									</Text>
+									<Text
+										style={{
+											fontSize: 18,
+											fontWeight: "bold",
+											color: theme.colors.text,
+										}}
+									>
+										The Great Fourth's Legacy
+									</Text>
+								</View>
+
+								{/* Speaker */}
+								<View
+									style={{
+										// overflow: "hidden",
+										borderRadius: 60,
+										alignItems: "center",
+										width: "50%",
+									}}
+								>
+									<Image
+										source={{
+											uri: "https://cdn.pixabay.com/photo/2024/08/21/11/11/young-man-8985888_1280.png",
+										}}
+										style={{
+											width: 120,
+											height: 120,
+											marginRight: 8,
+											borderRadius: 60,
+										}}
+									/>
+									<Text
+										style={{
+											fontSize: 15,
+											color: theme.colors.gray600,
+											fontWeight: "600",
+											marginTop: 8,
+											// textAlign: "center",
+										}}
+									>
+										Priya Kapoor
+									</Text>
+									<Text
+										style={{
+											fontSize: 15,
+											color: theme.colors.gray600,
+											fontWeight: "600",
+											paddingBottom: 8,
+
+											// textAlign: "center",
+										}}
+									>
+										Chimi P.Wangdi
+									</Text>
+								</View>
+							</View>
+							<View
+								style={{
+									height: 2,
+									backgroundColor: theme.colors.gray400,
+									marginVertical: 10,
+								}}
+							/>
+
+							{/* Time and Location */}
+							<View
+								style={{
+									flexDirection: "row",
+									alignItems: "center",
+								}}
+							>
+								<Text
+									style={{
+										fontSize: 12,
+										color: theme.colors.gray700,
+										fontWeight: "bold",
+									}}
+								>
+									{featuredEvent.time}
+								</Text>
+								<Text
+									style={{
+										fontSize: 6,
+										marginHorizontal: 6,
+									}}
+								>
+									{`\u25CF`}
+								</Text>
+								<Text
+									style={{
+										fontSize: 12,
+										color: theme.colors.gray700,
+										fontWeight: "bold",
+									}}
+								>
+									{featuredEvent.location}
+								</Text>
+							</View>
+						</View>
+					</TouchableOpacity>
+				</View>
+			)}
+
+			{/* Category Tabs */}
+			<View style={{ paddingHorizontal: 16, marginBottom: 20 }}>
+				<ScrollView horizontal showsHorizontalScrollIndicator={false}>
+					{["Talks", "Workshops", "Dialogue", "Conversation"].map(
+						(category) => (
+							<TouchableOpacity
+								key={category}
+								style={{
+									marginRight: 8,
+									paddingHorizontal: 12,
+									paddingVertical: 6,
+									// borderRadius: 6,
+									// backgroundColor: theme.colors.gray100,
+									borderRightWidth: 1,
+									borderRightColor: theme.colors.gray300,
+								}}
+							>
+								<Text
+									style={{
+										fontSize: 14,
+										color: theme.colors.text,
+										fontWeight: "600",
+									}}
+								>
+									{category}
+								</Text>
+							</TouchableOpacity>
+						),
+					)}
+				</ScrollView>
+			</View>
+
+			{/* Day Schedule */}
+			<View style={{ paddingHorizontal: 16, marginBottom: 20 }}>
+				{/* <Text
+					style={{
+						fontSize: 14,
+						fontWeight: "700",
+						color: theme.colors.text,
+						marginBottom: 12,
+					}}
+				>
+					Schedule by Day
+				</Text> */}
+				<View
+					style={{
+						flexDirection: "row",
+						marginBottom: 12,
+						borderRadius: 20,
+						overflow: "hidden",
+					}}
+				>
+					{[1, 2, 3, 4].map((day) => (
+						<TouchableOpacity
+							key={day}
+							style={{
+								paddingHorizontal: 12,
+								paddingVertical: 8,
+								backgroundColor: day === 1 ? theme.colors.primary : "#e7eedf",
+								flex: 1,
+								alignItems: "center",
+							}}
+						>
+							<Text
+								style={{
+									fontSize: 12,
+									fontWeight: "600",
+									color: day === 1 ? "white" : theme.colors.text,
+								}}
+							>
+								Day {day}
+							</Text>
+						</TouchableOpacity>
+					))}
+				</View>
+
+				{/* Event Cards */}
+				<ScrollView
+					horizontal
+					showsHorizontalScrollIndicator={false}
+					style={{
+						width: "94%",
+						alignSelf: "center",
+					}}
+				>
+					{upcomingEvents.map((event) => (
+						<TouchableOpacity
+							key={event.id}
+							onPress={() => handleEventPress(event)}
+							style={{
+								// width: width * 0.35,
+								alignItems: "center",
+							}}
+						>
+							<Image
+								source={{
+									uri: "https://cdn.pixabay.com/photo/2024/08/21/11/11/young-man-8985888_1280.png",
+								}}
+								style={{
+									width: 70,
+									height: 70,
+									borderRadius: 40,
+									marginBottom: 8,
+									backgroundColor: "#33b564",
+								}}
+							/>
+							<Text
+								style={{
+									fontSize: 13,
+									color: theme.colors.text,
+									textAlign: "center",
+									fontWeight: "bold",
+									height: 30,
+									width: 80,
+								}}
+								numberOfLines={2}
+							>
+								{event.title.split(":")[0]}
+							</Text>
+							<View
+								style={{
+									height: 2,
+									backgroundColor: theme.colors.gray400,
+									width: "100%",
+									marginVertical: 6,
+									marginTop: 20,
+								}}
+							/>
+							<Text
+								style={{
+									fontSize: 10,
+									color: theme.colors.gray600,
+									marginTop: 4,
+								}}
+							>
+								{event.time}
+							</Text>
+						</TouchableOpacity>
+					))}
+				</ScrollView>
+			</View>
+
+			{/* Sponsors Section */}
+			<View style={{ paddingHorizontal: 20, marginBottom: 30 }}>
+				<Text
+					style={{
+						fontSize: 14,
+						fontWeight: "700",
+						color: theme.colors.primary,
+						// marginBottom: 12,
+					}}
+				>
+					Our Sponsors
+				</Text>
+				<View
+					style={{
+						flexDirection: "row",
+						justifyContent: "space-around",
+						alignItems: "center",
+						// paddingVertical: 12,
+					}}
+				>
+					<ScrollView horizontal showsHorizontalScrollIndicator={false}>
+						{sponsors.map((sponsor) => (
+							<View
+								key={sponsor.id}
+								style={{
+									marginRight: 6,
+								}}
+							>
+								<Image
+									source={{
+										uri: "https://plus.unsplash.com/premium_photo-1674571895797-3ca2aaf89eed?w=600&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTd8fGNvbXBhbnklMjBsb2dvfGVufDB8fDB8fHww",
+									}}
+									resizeMode="contain"
+									style={{
+										width: 100,
+										height: 100,
+									}}
+								/>
+							</View>
+						))}
+					</ScrollView>
+				</View>
+			</View>
+		</ScrollView>
+	);
+};
+
+export default HomeScreen;
