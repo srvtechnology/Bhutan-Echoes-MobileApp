@@ -2,7 +2,7 @@
   "expo": {
     "name": "Bhutan Echoes",
     "slug": "bhutan_echoes",
-    "version": "1.0.2",
+    "version": "1.0.4",
     "orientation": "portrait",
     "icon": "./assets/appstore.png",
     "scheme": "myapp",
@@ -27,7 +27,6 @@
         "READ_MEDIA_AUDIO",
         "READ_MEDIA_VIDEO",
         "READ_MEDIA_IMAGES",
-        "MANAGE_EXTERNAL_STORAGE",
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE",
         "android.permission.ACCESS_MEDIA_LOCATION"

@@ -1,6 +1,7 @@
 import { Tabs } from "expo-router";
 import { Image, View } from "react-native";
-import {Home, HomeIcon, Calendar, Map, Info} from 'lucide-react-native'
+import { Home, HomeIcon, Calendar, Map, Info } from "lucide-react-native";
+import { theme } from "@/theme/theme";
 
 export default function TabLayout() {
   return (
@@ -19,52 +20,56 @@ export default function TabLayout() {
           paddingBottom: 20,
           paddingTop: 10,
         },
-        tabBarActiveTintColor: "#48732C",
-        tabBarInactiveTintColor: "#8E8E93",
+        tabBarActiveTintColor: theme.colors.primary,
+        tabBarInactiveTintColor: theme.colors.gray500,
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontFamily: "poppins",
+        },
         // tabBarShowLabel: false,
         tabBarIconStyle: { height: 40 },
       }}
     >
       <Tabs.Screen
-				name="home"
-				options={{
-					headerShown: false,
-					tabBarIcon: ({ color, size }) => (
-						<Home width={size} height={size} color={color} />
-					),
-					tabBarLabel: "Home",
-				}}
-			/>
-			<Tabs.Screen
-				name="Schedule"
-				options={{
-					headerShown: false,
-					tabBarIcon: ({ color, size }) => (
-						<Calendar width={size} height={size} color={color} />
-					),
-					tabBarLabel: "My Schedule",
-				}}
-			/>
-			<Tabs.Screen
-				name="Map"
-				options={{
-					headerShown: false,
-					tabBarIcon: ({ color, size }) => (
-						<Map width={size} height={size} color={color} />
-					),
-					tabBarLabel: "Map",
-				}}
-			/>
-			<Tabs.Screen
-				name="Info"
-				options={{
-					headerShown: false,
-					tabBarIcon: ({ color, size }) => (
-						<Info width={size} height={size} color={color} />
-					),
-					tabBarLabel: "Info",
-				}}
-			/>
+        name="home"
+        options={{
+          headerShown: false,
+          tabBarIcon: ({ color, size }) => (
+            <Home width={size} height={size} color={color} />
+          ),
+          tabBarLabel: "Home",
+        }}
+      />
+      <Tabs.Screen
+        name="Schedule"
+        options={{
+          headerShown: false,
+          tabBarIcon: ({ color, size }) => (
+            <Calendar width={size} height={size} color={color} />
+          ),
+          tabBarLabel: "My Schedule",
+        }}
+      />
+      <Tabs.Screen
+        name="Map"
+        options={{
+          headerShown: false,
+          tabBarIcon: ({ color, size }) => (
+            <Map width={size} height={size} color={color} />
+          ),
+          tabBarLabel: "Map",
+        }}
+      />
+      <Tabs.Screen
+        name="Info"
+        options={{
+          headerShown: false,
+          tabBarIcon: ({ color, size }) => (
+            <Info width={size} height={size} color={color} />
+          ),
+          tabBarLabel: "Info",
+        }}
+      />
     </Tabs>
   );
 }
