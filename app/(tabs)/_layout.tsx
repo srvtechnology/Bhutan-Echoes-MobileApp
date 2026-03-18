@@ -1,6 +1,6 @@
 import { Tabs } from "expo-router";
 import { Image, View } from "react-native";
-import { Home, HomeIcon, Calendar, Map, Info } from "lucide-react-native";
+import { Home, HomeIcon, Calendar, Map, Info, Calendar1 } from "lucide-react-native";
 import { theme } from "@/theme/theme";
 
 export default function TabLayout() {
@@ -51,13 +51,13 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="Map"
+        name="OtherEvents"
         options={{
           headerShown: false,
           tabBarIcon: ({ color, size }) => (
-            <Map width={size} height={size} color={color} />
+            <Calendar1 width={size} height={size} color={color} />
           ),
-          tabBarLabel: "Map",
+          tabBarLabel: "Other Events",
         }}
       />
       <Tabs.Screen

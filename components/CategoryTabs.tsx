@@ -22,12 +22,12 @@ export default function CategoryTabs() {
                 borderRightWidth: idx !== arr.length - 1 ? 1 : 0,
                 borderRightColor: theme.colors.gray300,
               }}
-              onPress={() =>
-                router.push({
-                  pathname: `/(tabs)/home/categoryDetails`,
-                  params: { category },
-                })
-              }
+              // onPress={() =>
+              //   router.push({
+              //     pathname: `/(tabs)/home/categoryDetails`,
+              //     params: { category },
+              //   })
+              // }
             >
               <Text
                 style={{
