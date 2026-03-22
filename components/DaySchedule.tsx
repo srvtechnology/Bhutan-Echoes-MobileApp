@@ -4,7 +4,7 @@ import { theme } from "@/theme/theme";
 import { router } from "expo-router";
 import { useEventStore } from "@/store/eventStore";
 
-export default function DaySchedule() {
+export default function DaySchedule({dates}:any[]) {
   const {
     events,
     sponsors,
@@ -37,9 +37,9 @@ export default function DaySchedule() {
           overflow: "hidden",
         }}
       >
-        {[1, 2, 3, 4].map((day) => (
+        {dates.map((day) => (
           <TouchableOpacity
-            key={day}
+            key={day.date}
             style={{
               paddingHorizontal: 12,
               paddingVertical: 6,
@@ -57,7 +57,7 @@ export default function DaySchedule() {
                 fontFamily: theme.typography.fontFamily.medium,
               }}
             >
-              Day {day}
+              {day.day}
             </Text>
           </TouchableOpacity>
         ))}

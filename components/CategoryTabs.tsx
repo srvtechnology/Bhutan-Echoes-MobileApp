@@ -3,7 +3,14 @@ import React from "react";
 import { theme } from "@/theme/theme";
 import { router } from "expo-router";
 
-export default function CategoryTabs() {
+export default function CategoryTabs({categories}: any) {
+  console.log("===== categories ======>", categories);
+  
+  // Ensure categories is an array
+  const categoryArray = Array.isArray(categories) ? categories : [];
+  
+  if (categoryArray.length === 0) return null;
+  
   return (
     <View
       style={{
@@ -12,22 +19,16 @@ export default function CategoryTabs() {
       }}
     >
       <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-        {["Talks", "Workshops", "Dialogue", "Conversation"].map(
-          (category, idx, arr) => (
+        {categoryArray.map(
+          (category:any, idx:number, arr: any) => (
             <TouchableOpacity
-              key={category}
+              key={category.id}
               style={{
                 paddingHorizontal: 12,
                 paddingVertical: 6,
                 borderRightWidth: idx !== arr.length - 1 ? 1 : 0,
                 borderRightColor: theme.colors.gray300,
               }}
-              // onPress={() =>
-              //   router.push({
-              //     pathname: `/(tabs)/home/categoryDetails`,
-              //     params: { category },
-              //   })
-              // }
             >
               <Text
                 style={{
@@ -36,7 +37,7 @@ export default function CategoryTabs() {
                   fontFamily: theme.typography.fontFamily.medium,
                 }}
               >
-                {category}
+                {category?.name}
               </Text>
             </TouchableOpacity>
           ),

@@ -1,13 +1,14 @@
 "use client";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
-  View,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  Image,
-  FlatList,
-  useWindowDimensions,
+	View,
+	ScrollView,
+	Text,
+	TouchableOpacity,
+	Image,
+	FlatList,
+	useWindowDimensions,
+	ActivityIndicator,
 } from "react-native";
 import { useEventStore } from "../../../store/eventStore";
 import { Play } from "lucide-react-native";
@@ -18,113 +19,105 @@ import CategoryTabs from "@/components/CategoryTabs";
 import DaySchedule from "@/components/DaySchedule";
 import Sponsers from "@/components/Sponsers";
 import YouTubePlayer from "@/components/YouTubePlayer";
+import { useLocalSearchParams } from "expo-router";
+import axios from "axios";
+import { baseUrl } from "@/config";
 
 const WatchScreen = ({ navigation }: any) => {
-  const {
-    events,
-    sponsors,
-    setSelectedEvent,
-    toggleSaveEvent,
-    savedEvents,
-    fetchEvents,
-    fetchSponsors,
-  } = useEventStore();
-  const { width } = useWindowDimensions();
+	const params = useLocalSearchParams();
 
-  useEffect(() => {
-    fetchEvents();
-    fetchSponsors();
-  }, []);
+	const [eventData, setEventData] = useState({});
+	const [loading, setLoading] = useState(true);
 
-  const featuredEvent = events.find((e) => e.featured);
-  const upcomingEvents = events;
+	const fetchEventDetails = async () => {
+		try {
+			setLoading(true);
+			const { data } = await axios.get(
+				`${baseUrl}/event-management/details/${params?.id}`,
+			);
+			setEventData(data || {});
+		} catch (error) {
+			console.log("Error fetching event details: ", error);
+			return null;
+		} finally {
+			console.log("------- eventData", eventData);
 
-  const handleEventPress = (event: any) => {
-    setSelectedEvent(event);
-    navigation.navigate("EventDetail");
-  };
+			setLoading(false);
+		}
+	};
 
-  const isSaved = (eventId: string) => savedEvents.includes(eventId);
-  const html = `
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-      body { margin: 0; padding: 0; }
-      iframe { position: absolute; top:0; left:0; width:100%; height:100%; }
-      .video-container {
-        position: relative;
-        width: 100%;
-        height: 100%;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="video-container">
-      <iframe
-        src="https://www.youtube.com/embed/vMF-mSpynDg?autoplay=0&controls=1&rel=0"
-        frameborder="0"
-        allow="accelerometer; encrypted-media; gyroscope; picture-in-picture"
-        allowfullscreen>
-      </iframe>
-    </div>
-  </body>
-</html>
-`;
-  return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: theme.colors.bg }}
-      contentContainerStyle={{ backgroundColor: theme.colors.bg }}
-    >
-      {/* Header */}
-      <Header back />
+	useEffect(() => {
+		fetchEventDetails();
+	}, []);
 
-      {/* Featured Image with Play Button */}
-      <View style={{ marginHorizontal: 20, marginTop: 20 }}>
-        <YouTubePlayer
-          url="https://www.youtube.com/watch?v=vMF-mSpynDg"
-          height={190}
-        />
-        <View
-          style={{
-            alignItems: "flex-start",
-          }}
-        >
-          <Text
-            style={{
-              fontSize: 16,
-              fontFamily: theme.typography.fontFamily.semiBold,
-              color: theme.colors.text,
-              flex: 1,
-              lineHeight: 20,
-            }}
-          >
-            The Wisdom of Balance:
-          </Text>
-          <Text
-            style={{
-              fontSize: 16,
-              fontFamily: theme.typography.fontFamily.semiBold,
-              color: theme.colors.text,
-              flex: 1,
-              lineHeight: 20,
-            }}
-          >
-            The Great Fourth's Legacy
-          </Text>
-        </View>
-      </View>
+	return (
+		<ScrollView
+			style={{ flex: 1, backgroundColor: theme.colors.bg }}
+			contentContainerStyle={{ backgroundColor: theme.colors.bg }}
+		>
+			{/* Header */}
+			<Header back />
 
-      {/* Category Tabs */}
-      <CategoryTabs />
+			{/* Loader */}
+			{loading ? (
+				<View
+					style={{
+						flex: 1,
+						justifyContent: "center",
+						alignItems: "center",
+						minHeight: 400,
+					}}
+				>
+					<ActivityIndicator size="large" color={theme.colors.primary} />
+				</View>
+			) : (
+				<>
+					{/* Featured Image with Play Button */}
+					<View
+						style={{
+							marginHorizontal: 20,
+							marginTop: 20,
+						}}
+					>
+						<YouTubePlayer
+							url={eventData?.event_details?.youtube_video || ""}
+							height={190}
+						/>
+						<View
+							style={{
+								alignItems: "flex-start",
+							}}
+						>
+							<Text
+								style={{
+									fontSize: 16,
+									fontFamily: theme.typography.fontFamily.semiBold,
+									color: theme.colors.text,
+									flex: 1,
+									lineHeight: 20,
+								}}
+							>
+								{eventData?.event_details?.eventname}
+							</Text>
+						</View>
+					</View>
 
-      {/* Day Schedule */}
-      <DaySchedule />
-      {/* Sponsors Section */}
-      <Sponsers />
-    </ScrollView>
-  );
+					{/* Category Tabs */}
+					{eventData?.categories?.length > 0 && (
+						<CategoryTabs categories={eventData?.categories} />
+					)}
+
+					{/* Day Schedule */}
+					{eventData?.dates?.length > 0 && (
+						<DaySchedule dates={eventData?.dates} />
+					)}
+				</>
+			)}
+
+			{/* Sponsors Section */}
+			<Sponsers />
+		</ScrollView>
+	);
 };
 
 export default WatchScreen;
