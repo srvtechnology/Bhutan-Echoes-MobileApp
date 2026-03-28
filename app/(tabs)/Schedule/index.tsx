@@ -131,7 +131,12 @@ export default function Schedule() {
 									shadowOpacity: 0.2,
 									shadowRadius: 4,
 								}}
-								onPress={() => router.push("/Schedule/details")}
+								onPress={() =>
+									router.push({
+										pathname: "/Schedule/details",
+										params: { id: item.id },
+									})
+								}
 							>
 								<View
 									style={{
@@ -213,7 +218,6 @@ export default function Schedule() {
 														height: 120,
 														borderRadius: 60,
 													}}
-													
 												/>
 											</View>
 										</View>

@@ -31,7 +31,7 @@ const Header = ({ back = true }: { back?: boolean }) => {
             // alignItems: "center",
           }}
         >
-          <TouchableOpacity
+          {/* <TouchableOpacity
             style={{
               backgroundColor: "#33b564",
               paddingHorizontal: 20,
@@ -50,7 +50,7 @@ const Header = ({ back = true }: { back?: boolean }) => {
             >
               DONATE
             </Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
           <View
             style={{
               paddingLeft: back ? 0 : 10,
