@@ -20,14 +20,14 @@ export default function CategoryTabs({ data, handleSpeakerNavigation }: {data: a
 	const [loading, setLoading] = useState(false);
 
 	useEffect(() => {
-		setSelectedDate(categoryArray[0]?.dates);
+		setSelectedDate(categoryArray[0]);
 	}, []);
 
 	const isFewItems = categoryArray?.length <= 3;
 
   const handleCategorySelect = (idx: number) => {
     setLoading(true)
-    setSelectedDate(categoryArray[idx]?.dates)
+    setSelectedDate(categoryArray[idx])
     setTimeout(() => {
       setLoading(false)
     },500)
@@ -51,27 +51,30 @@ export default function CategoryTabs({ data, handleSpeakerNavigation }: {data: a
 				paddingVertical: 26,
 			}}
 		>
+			<View style={{ alignItems: "center", paddingHorizontal: 12  }}>
 			<ScrollView
 				horizontal
 				showsHorizontalScrollIndicator={false}
 				contentContainerStyle={{
-					justifyContent: isFewItems ? "space-around" : "flex-start",
+					// justifyContent: isFewItems ? "space-between" : "flex-start",
 					alignItems: "center",
 					flex: isFewItems ? 1 : 0,
-          // paddingHorizontal:isFewItems ? 0 : 8
+          paddingHorizontal:isFewItems ? 0 : 8,
 				}}
 			>
 				{categoryArray.map((category: any, idx: number, arr: any) => (
 					<TouchableOpacity
 						key={category.id}
 						style={{
-							paddingHorizontal: 12,
+							paddingRight: 12,
+							paddingLeft: 12,
 							paddingVertical: 6,
 							borderRightWidth: idx !== arr.length - 1 ? 1 : 0,
 							borderRightColor: theme.colors.gray300,
 							marginBottom: 10,
 							alignItems: "center",
 							flex: isFewItems ? 1 : 0,
+							backgroundColor: category.id === selectedDate.id ? theme.colors.back : "transparent",
 						}}
 						onPress={() => handleCategorySelect(idx)}
 					>
@@ -87,13 +90,14 @@ export default function CategoryTabs({ data, handleSpeakerNavigation }: {data: a
 					</TouchableOpacity>
 				))}
 			</ScrollView>
+			</View>
 			{/* Day Schedule */}
 			{loading ? (
 				<View style={{ alignItems: "center" }}>
 					<ActivityIndicator size="large" color={theme.colors.primary} />
 				</View>
-			) : selectedDate?.length > 0 ? (
-				<DaySchedule dates={selectedDate} venue={data.venue} handleSpeakerClick={onClickSpeaker} />
+			) : selectedDate?.dates?.length > 0 ? (
+				<DaySchedule dates={selectedDate?.dates} venue={data.venue} handleSpeakerClick={onClickSpeaker} />
 			) : (
 				<View style={{ alignItems: "center" }}>
 					<Text

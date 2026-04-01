@@ -15,7 +15,7 @@ import { theme } from "@/theme/theme";
 import CategoryTabs from "@/components/CategoryTabs";
 import DaySchedule from "@/components/DaySchedule";
 import Sponsers from "@/components/Sponsers";
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import moment from "moment";
 
 interface DataProps {
@@ -61,6 +61,14 @@ const HomeScreen = ({ navigation }: any) => {
 		setData({ categories, speaker, venue, category });
 	}, []);
 
+	const handleSpeakerNavigation = (data: any) => {
+			router.push({
+				pathname: "/(tabs)/home/eventDetails",
+				params: data,
+			});
+		};
+	
+
 	return (
 		<ScrollView
 			style={{ flex: 1, backgroundColor: theme.colors.bg }}
@@ -87,7 +95,7 @@ const HomeScreen = ({ navigation }: any) => {
 					<View>
 						<View
 							style={{
-								backgroundColor: "#e7eedf",
+								backgroundColor: theme.colors.back,
 								borderRadius: 24,
 								padding: 16,
 							}}
@@ -206,6 +214,7 @@ const HomeScreen = ({ navigation }: any) => {
 			{data?.categories?.length > 0 && (
 				<CategoryTabs
 					data={{ categories: data?.categories, venue: data?.venue }}
+					handleSpeakerNavigation={handleSpeakerNavigation}
 				/>
 			)}
 

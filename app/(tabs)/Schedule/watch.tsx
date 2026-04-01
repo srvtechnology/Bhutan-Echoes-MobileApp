@@ -19,7 +19,7 @@ import CategoryTabs from "@/components/CategoryTabs";
 import DaySchedule from "@/components/DaySchedule";
 import Sponsers from "@/components/Sponsers";
 import YouTubePlayer from "@/components/YouTubePlayer";
-import { useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import axios from "axios";
 import { baseUrl } from "@/config";
 
@@ -49,6 +49,14 @@ const WatchScreen = ({ navigation }: any) => {
 	useEffect(() => {
 		fetchEventDetails();
 	}, []);
+
+	const handleSpeakerNavigation = (data: any) => {
+			router.push({
+				pathname: "/(tabs)/Schedule/eventDetails",
+				params: data,
+			});
+		};
+	
 
 	return (
 		<ScrollView
@@ -108,7 +116,7 @@ const WatchScreen = ({ navigation }: any) => {
 
 					{/* Category Tabs */}
 					{eventData?.categories?.length > 0 && (
-						<CategoryTabs data={{ categories: eventData?.categories, venue: eventData?.event_details?.venue }} />
+						<CategoryTabs data={{ categories: eventData?.categories, venue: eventData?.event_details?.venue }} handleSpeakerNavigation={handleSpeakerNavigation} />
 					)}
 
 					

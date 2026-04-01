@@ -40,7 +40,7 @@ export default function DaySchedule({
 					contentContainerStyle={{
 						minWidth: "100%",
 						alignItems: "center",
-             backgroundColor: "#e7eedf",
+             backgroundColor: theme.colors.back,
 					}}
 				>
 					{dates.length > 0 &&
@@ -51,9 +51,9 @@ export default function DaySchedule({
 									paddingHorizontal: 22,
 									paddingVertical: 8,
 									backgroundColor:
-										day === selectedDay ? theme.colors.primary : "#e7eedf",
+										idx === selectedDay ? theme.colors.primary : theme.colors.back,
 									flex: isFewItems ? 1 : undefined,
-									marginHorizontal: isFewItems ? 4 : 0,
+									// marginHorizontal: isFewItems ? 4 : 0,
 									alignItems: "center",
                   // justifyContent: 'center',
 								}}

@@ -31,7 +31,7 @@ export default function Details({eventData, handleSpeakerNavigation,onWatchClick
 					<View>
 						<View
 							style={{
-								backgroundColor: "#e7eedf",
+								backgroundColor: theme.colors.back,
 								borderRadius: 24,
 								padding: 16,
 							}}
@@ -61,8 +61,7 @@ export default function Details({eventData, handleSpeakerNavigation,onWatchClick
 										lineHeight: 20,
 									}}
 								>
-									{eventData?.event_details?.eventname}{" "}
-									{eventData?.guest_speaker?.length}
+									{eventData?.event_details?.eventname}
 								</Text>
 							</View>
 
@@ -91,7 +90,7 @@ export default function Details({eventData, handleSpeakerNavigation,onWatchClick
 											>
 												<Image
 													source={{
-														uri: `${mediaUrl}/${speaker.speaker_image}`,
+														uri: `${speaker.speaker_image}`, 
 													}}
 													style={{
 														width: 28,

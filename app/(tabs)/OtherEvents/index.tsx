@@ -92,7 +92,7 @@ export default function OtherEvents() {
               >
                 <View
                   style={{
-                    backgroundColor: "#e7eedf",
+                    backgroundColor: theme.colors.back,
                     padding: 16,
                     // borderBottomWidth: item.isFeatured ? 4 : 0,
                     // borderBottomColor: item.isFeatured

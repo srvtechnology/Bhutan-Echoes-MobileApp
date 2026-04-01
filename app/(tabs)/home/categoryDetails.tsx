@@ -13,11 +13,6 @@ export default function CategoryDetails() {
     >
       {/* Header */}
       <Header back />
-      {/* Category Tabs */}
-      <CategoryTabs />
-
-      {/* Day Schedule */}
-      <DaySchedule />
     </ScrollView>
   );
 }

@@ -7,7 +7,7 @@ const palette = {
   secondary: "#86EFAC", // Light Green
   tertiary: "#16A34A", // Dark Green
 
-  background: "#e7eedf",
+  back: "#e7eedf",
   bg: "#f0f3f0",
 
   // Neutrals - Cream and off-white theme

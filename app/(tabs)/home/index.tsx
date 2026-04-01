@@ -351,34 +351,34 @@ const HomeScreen = ({ navigation }: any) => {
 					},
 					dates: [],
 				},
-				// {
-				//     "id": 5,
-				//     "name": "Intermission",
-				//     "slug": "intermission",
-				//     "status": "active",
-				//     "delete_status": "N",
-				//     "created_at": "2026-02-17T06:14:53.000000Z",
-				//     "updated_at": "2026-02-17T06:14:53.000000Z",
-				//     "pivot": {
-				//         "event_id": 4,
-				//         "category_id": 4
-				//     },
-				//     "dates": []
-				// },
-				// {
-				//     "id": 6,
-				//     "name": "Test",
-				//     "slug": "test",
-				//     "status": "active",
-				//     "delete_status": "N",
-				//     "created_at": "2026-02-17T06:14:53.000000Z",
-				//     "updated_at": "2026-02-17T06:14:53.000000Z",
-				//     "pivot": {
-				//         "event_id": 4,
-				//         "category_id": 4
-				//     },
-				//     "dates": []
-				// },
+				{
+				    "id": 5,
+				    "name": "Intermission",
+				    "slug": "intermission",
+				    "status": "active",
+				    "delete_status": "N",
+				    "created_at": "2026-02-17T06:14:53.000000Z",
+				    "updated_at": "2026-02-17T06:14:53.000000Z",
+				    "pivot": {
+				        "event_id": 4,
+				        "category_id": 4
+				    },
+				    "dates": []
+				},
+				{
+				    "id": 6,
+				    "name": "Test",
+				    "slug": "test",
+				    "status": "active",
+				    "delete_status": "N",
+				    "created_at": "2026-02-17T06:14:53.000000Z",
+				    "updated_at": "2026-02-17T06:14:53.000000Z",
+				    "pivot": {
+				        "event_id": 4,
+				        "category_id": 4
+				    },
+				    "dates": []
+				},
 			],
 			success: true,
 		};
