@@ -22,6 +22,7 @@ import Toast from "react-native-toast-message";
 import { ToastRoot } from "@/components/ToastHelper";
 import { NotificationProvider } from "@/context/NotificationContext";
 import * as Notifications from "expo-notifications";
+import { theme } from "@/theme/theme";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -71,11 +72,11 @@ export default function RootLayout() {
           <View
             style={{
               height: 46,
-              backgroundColor: "#48732C",
+              backgroundColor: theme.colors.primary,
             }}
           />
         )}
-        <StatusBar backgroundColor="#48732C" style="light" />
+        <StatusBar backgroundColor={theme.colors.primary} style="light" />
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="splash" />
           <Stack.Screen name="(tabs)" />
